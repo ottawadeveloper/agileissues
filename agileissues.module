@@ -1,0 +1,1573 @@
+<?php
+
+function agileissues_get_relationship_types() {
+  return module_invoke_all('agile_relationships');
+}
+
+function agileissues_define_relationship($left_type, $left_id, $right_type, $right_id, $relationship_type) {
+  $properties = array(
+    'relationship_type' => $relationship_type,
+    'left_entity_type' => $left_type,
+    'left_entity_id' => $left_id,
+    'right_entity_type' => $right_type,
+    'right_entity_id' => $right_id,
+  );
+  db_merge('agileissues_relationships')
+    ->key($properties)
+    ->fields($properties)
+    ->execute();
+}
+
+function agileissues_agile_relationships() {
+  return array(
+    'blocks' => array(
+      'left_display' => t('Blocks'),
+      'right_display' => t('Blocked by'),
+      'left_types' => array('story', 'task'),
+      'right_types' => array('story', 'task'),
+    ),
+    'consult' => array(
+      'left_display' => t('See'),
+      'right_display' => t('Is referenced by'),
+      'left_types' => array('story', 'task'),
+      'right_types' => array('story', 'task'),
+    ),
+    'duplicates' => array(
+      'left_display' => t('Duplicates'),
+      'right_display' => t('Is duplicated by'),
+      'left_types' => array('story'),
+      'right_types' => array('story'),
+    ),
+  );
+}
+
+function agileissues_register_changelog($note, $property, $old, $new) {
+  $change = array(
+    'note_id' => $note->id,
+    'property_key' => $property,
+    'old_value' => $old,
+    'new_value' => $new,
+  );
+  db_insert('agileissues_changelog')->fields($change)->execute();
+}
+
+function agileissues_get_changes($note) {
+  $changes = db_select('agileissues_changelog', 'acl')
+    ->fields('acl')
+    ->condition('note_id', $note->id)
+    ->execute()->fetchAll();
+  $display = array();
+  $processors = agileissues_get_changelog_processors($note->entity_type);
+  foreach ($changes as $change) {
+    $processor = $processors[$change->property_key];
+    $disp = array(
+      '#theme' => 'agileissues_changelog_entry',
+      '#label' => $processor['display'],
+      '#old' => $change->old_value,
+      '#new' => $change->new_value,
+    );
+    if (!empty($processor['display callback'])) {
+      $disp['#old'] = $processor['display callback']($disp['#old']);
+      $disp['#new'] = $processor['display callback']($disp['#new']);
+    }
+    $display[] = $disp;
+  }
+  return $display;
+}
+
+function agileissues_save_changelog($note, $changes) {
+  foreach ($changes as $change) {
+    agileissues_register_changelog($note, $change['property'], $change['old'], $change['new']);
+  }
+}
+
+function agileissues_process_changelog($old, $new, $type) {
+  $processors = agileissues_get_changelog_processors($type);
+  $changes = array();
+  foreach ($processors as $key => $processor) {
+    $old_value = NULL;
+    $new_value = NULL;
+    if (isset($processor['index callback'])) {
+      $old_value = $processor['index callback']($old);
+      $new_value = $processor['index callback']($new);
+    }
+    elseif (isset($processor['index'])) {
+      $old_value = $old->{$processor['index']};
+      $new_value = $new->{$processor['index']};
+    }
+    if ($old_value != $new_value) {
+      $changes[] = array(
+        'property' => $key,
+        'old' => $old_value,
+        'new' => $new_value,
+      );
+    }
+  }
+  return $changes;
+}
+
+function agileissues_get_changelog_processors($type = 'story') {
+  return module_invoke_all('agile_changelog_processors', $type);
+}
+
+function agileissues_agile_changelog_processors($type) {
+  $processors = array();
+  switch ($type) {
+    case 'task':
+      $processors['task-status'] = array(
+        'display' => t('Task Status'),
+        'index' => 'status',
+        'display callback' => '_agileissues_task_status_name',
+      );
+      break;
+  }
+  return $processors;
+}
+
+function _agileissues_task_status_name($code) {
+  switch ($code) {
+    case 'O': return t('Open');
+    case 'C': return t('Closed');
+  }
+  return t('Unknown');
+}
+
+function agileissues_cron() {
+  $maxTime = variable_get('agileissues_cron_process_stories', 300);
+  $start = time();
+  $storyIDs = db_select('agileissues_story', 'ais')
+    ->orderBy('updated', 'ASC')
+    ->fields('ais', array('id'))
+    ->execute()->fetchAllKeyed(0, 0);
+  foreach ($storyIDs as $id) {
+    if ((time() - $start) > $maxTime) {
+      break;
+    }
+    // resaving updates the priority ID
+    $story = agileissues_story_load($id);
+    agileissues_story_save($story);
+  }
+}
+
+function _agileissues_project_operations($project, $type = 'main') {
+  ctools_include('ajax');
+  ctools_include('modal');
+  ctools_modal_add_js();
+  $ops = array();
+  if (agileissues_project_access($project)) {
+    $ops['view'] = l(t('View'), 'agile/project/' . $project->id);
+  }
+  if (user_access('view agile statistics')) {
+    $ops['stats'] = l(t('Metrics'), 'agile/project/' . $project->id . '/stats');
+  }
+  if (agileissues_search_access()) {
+    $ops['search'] = l(t('Search'), 'agile/search/@projectid=' . $project->id);
+  }
+  if (user_access('open new agile stories')) {
+    $ops['open'] = l(t('New Story'), 'agile/project/' . $project->id . '/open-request/nojs', array('attributes' => array('class' => 'ctools-use-modal')));
+    if ($type == 'main') {
+      $ops['my-reported'] = l(t('My Stories'), 'agile/project/' . $project->id . '/my-reported-stories');
+    }
+  }
+  if (user_access('own agile tasks') && $type == 'main') {
+    $ops['my-tasks'] = l(t('My Tasks'), 'agile/project/' . $project->id . '/my-tasks');
+  }
+  if (user_access('own agile stories') && $type == 'main') {
+    $ops['assigned-stories'] = l(t('My Portfolio'), 'agile/project/' . $project->id . '/my-stories');
+  }
+  if (user_access('manage agile stories')) {
+    if (!empty($project->default_backlog)) {
+      $ops['manage-stories'] = l(t('New Stories'), 'agile/project/' . $project->id . '/story-management/' . $project->default_backlog);
+      $ops['orphan-stories'] = l(t('Orphan Stories'), 'agile/project/' . $project->id . '/story-management');
+    }
+    else {
+      $ops['manage-stories'] = l(t('New Stories'), 'agile/project/' . $project->id . '/story-management');
+    }
+  }
+  if (user_access('manage agile tasks')) {
+    $ops['manage-tasks'] = l(t('Unscheduled Tasks'), 'agile/project/' . $project->id . '/task-management');
+  }
+  if (user_access('manage agile projects') && $type === 'main') {
+    $ops['edit'] = l(t('Edit Project'), 'admin/content/agile/project/' . $project->id);
+  }
+  return $ops;
+}
+
+function _agileissues_story_operations($story) {
+  ctools_include('ajax');
+  ctools_include('modal');
+  ctools_modal_add_js();
+  $ops = array();
+  if (agileissues_story_access('view', $story)) {
+    $ops[] = l(t('View'), 'agile/story/' . $story->id . '/nojs', array('attributes' => array('class' => 'ctools-use-modal')));
+  }
+  if (agileissues_story_access('edit', $story)) {
+    $ops[] = l(t('Edit'), 'agile/story/' . $story->id . '/edit/nojs', array('attributes' => array('class' => 'ctools-use-modal')));
+  }
+  if (agileissues_story_access('move', $story)) {
+    $ops[] = l(t('Move'), 'agile/story/' . $story->id . '/move/nojs', array('attributes' => array('class' => 'ctools-use-modal')));
+  }
+  if (agileissues_story_access('delete', $story)) {
+    $query = array('query' => drupal_get_destination());
+    $ops[] = l(t('Delete'), 'agile/story/' . $story->id . '/delete/nojs', array('attributes' => array('class' => 'ctools-use-modal')) + $query);
+  }
+  if (user_access('add agile story notes')) {
+    $ops[] = l(t('Add Note'), 'agile/story/' . $story->id . '/note/nojs', array('attributes' => array('class' => 'ctools-use-modal')));
+  }
+  if (user_access('open new agile tasks')) {
+    $ops[] = l(t('Add Task'), 'agile/story/' . $story->id . '/task/nojs', array('attributes' => array('class' => 'ctools-use-modal')));
+  }
+  return $ops;
+}
+
+function _agileissues_get_global_actions() {
+  ctools_include('ajax');
+  ctools_include('modal');
+  ctools_modal_add_js();
+  $actions = array();
+  if (agileissues_frontend_access()) {
+    $actions[] = l(t('Projects'), 'agile');
+  }
+  if (agileissues_search_access()) {
+    $actions[] = l(t('Search'), 'agile/search');
+  }
+  if (user_access('open new agile stories')) {
+    $actions[] = l(t('New Story'), 'agile/open-request/nojs', array('attributes' => array('class' => 'ctools-use-modal')));
+    $actions[] = l(t('My Stories'), 'agile/my-reported-stories');
+  }
+  if (user_access('own agile stories')) {
+    $actions[] = l(t('My Portfolio'), 'agile/my-stories');
+  }
+  if (user_access('own agile tasks')) {
+    $actions[] = l(t('My Tasks'), 'agile/my-tasks');
+  }
+  return $actions;
+}
+
+function agileissues_agile_story_priority($story) {
+  $diff = (time() - $story->created) / (3600 * 24);
+  if ($diff > 0) {
+    return array(log($diff, 14));
+  }
+  else {
+    return array();
+  }
+}
+
+function _agileissues_task_operations($task, $mode = 'main') {
+  ctools_include('ajax');
+  ctools_include('modal');
+  ctools_modal_add_js();
+  $ops = array();
+  if (agileissues_task_access('view', $task)) {
+    $ops[] = l(t('View'), 'agile/task/' . $task->id . '/nojs', array('attributes' => array('class' => 'ctools-use-modal')));
+  }
+  if (agileissues_task_access('edit', $task)) {
+    $ops[] = l(t('Edit'), 'agile/task/' . $task->id . '/edit/nojs', array('attributes' => array('class' => 'ctools-use-modal')));
+  }
+  $query = array('query' => drupal_get_destination());
+  if (agileissues_task_access('delete', $task)) {
+    $ops[] = l(t('Delete'), 'agile/task/' . $task->id . '/delete/nojs', array('attributes' => array('class' => 'ctools-use-modal')) + $query);
+  }
+  if (agileissues_task_access('note', $task)) {
+    $ops[] = l(t('Add Note'), 'agile/task/' . $task->id . '/note/nojs', array('attributes' => array('class' => 'ctools-use-modal')));
+  }
+  if (user_access('manage internal task data')) {
+    $ops[] = l(t('Assign'), 'agile/task/' . $task->id . '/assign/nojs', array('attributes' => array('class' => 'ctools-use-modal')));
+  }
+  return $ops;
+}
+
+function agileissues_build_metrics_list() {
+  return module_invoke_all('agile_metrics');
+}
+
+function agileissues_agile_metrics() {
+  $file = array(
+    'include' => array(
+      'type' => 'stats.inc',
+      'module' => 'agileissues',
+    ),
+  );
+  return array(
+    'agileissues_sprint_list' => array(
+      'callback' => 'agileissues_sprint_list',
+      'display' => t('Tasks by sprint'),
+    ) + $file,
+    'agileissues_backlog_list' => array(
+      'callback' => 'agileissues_backlog_list',
+      'display' => t('Stories by backlog'),
+    ) + $file,
+    'agileissues_usp_sprint' => array(
+      'callback' => 'agileissues_usp_sprint_list',
+      'display' => t('USP completed by sprint'),
+    ) + $file,
+    'agileissues_usp_user' => array(
+      'callback' => 'agileissues_usp_user_list',
+      'display' => t('USP completed by user'),
+    ),
+    'agileissues_estimations_sprint' => array(
+      'callback' => 'agileissues_estimations_sprint_list',
+      'display' => t('Time estimations by sprint'),
+    ),
+    'agileissues_estimations_user' => array(
+      'callback' => 'agileissues_estimations_user_list',
+      'display' => t('Time estimations by user'),
+    ),
+  );
+}
+
+function agileissues_test_metric($project) {
+  return '1234';
+}
+
+function agileissues_save_task(&$task) {
+  return entity_get_controller('agile_task')->save($task);
+}
+
+function _agileissues_reload_task_ajax($form) {
+  return $form['sprint_id'];
+}
+
+function agileissues_save_note($note) {
+  return entity_get_controller('agile_note')->save($note);
+}
+
+function agileissues_note_load_multiple($ids = FALSE) {
+  return entity_get_controller('agile_note')->load($ids);
+}
+
+function agileissues_note_load($id) {
+  $entities = agileissues_note_load_multiple(array($id));
+  return reset($entities);
+}
+
+function agileissues_note_load_by_entity($type, $entity) {
+  $ids = db_select('agileissues_notes', 'ain')
+    ->condition('entity_type', $type)
+    ->condition('entity_id', $entity->id)
+    ->fields('ain', array('id'))
+    ->execute()->fetchAllKeyed(0, 0);
+  return agileissues_note_load_multiple($ids);
+}
+
+function agileissues_orphan_stories() {
+  return entity_get_controller('agile_story')->load(db_select('agileissues_stories', 'ais')
+    ->condition('project_id', 0)
+    ->fields('ais', array('id'))
+    ->execute()
+    ->fetchAllKeyed(0, 0));
+}
+
+function agileissues_unassigned_stories($project = NULL) {
+  $q = db_select('agileissues_stories', 'ais');
+  if (!empty($project)) {
+    $q->condition('project_id', $project->id);
+  }
+  return entity_get_controller('agile_story')->load($q
+    ->condition('backlog_id', 0)
+    ->fields('ais', array('id'))
+    ->execute()
+    ->fetchAllKeyed(0, 0));
+}
+
+function agileissues_unassigned_tasks($project = NULL) {
+  $q = db_select('agileissues_tasks', 'ait');
+  if (!empty($project)) {
+    $q->condition('story_id', agileissues_project_story_ids($project));
+  }
+  return entity_get_controller('agile_task')->load($q
+    ->condition('sprint_id', 0)
+    ->fields('ait', array('id'))
+    ->execute()
+    ->fetchAllKeyed(0, 0));
+}
+
+function agileissues_project_sprints($agile_project) {
+  return agileissues_sprint_load_all(db_select('agileissues_stories', 'ais')
+    ->condition('project_id', $agile_project->id)
+    ->fields('ais', array('id'))
+    ->execute()
+    ->fetchAllKeyed(0, 0));
+}
+
+function agileissues_project_story_ids($project) {
+  return db_select('agileissues_stories', 'ais')
+    ->condition('project_id', $project->id)
+    ->fields('ais', array('id'))
+    ->execute()
+    ->fetchAllKeyed(0, 0);
+}
+
+function agileissues_project_count_tasks($agile_project, $sprint = NULL) {
+  $q = db_select('agileissues_tasks', 'ait')
+    ->condition('story_id', agileissues_project_story_ids($agile_project));
+  if (!empty($sprint)) {
+    $q->condition('sprint_id', $sprint->id);
+  }
+  return $q->countQuery()->execute()->fetchColumn();
+}
+
+function agileissues_project_stories($project) {
+  $ids = db_select('agileissues_stories', 'ais')
+    ->fields('ais', array('id'))
+    ->condition('project_id', $project->id)
+    ->execute()
+    ->fetchAllKeyed(0, 0);
+  return agileissues_project_load_all($ids);
+}
+
+function agileissues_project_backlogs($project) {
+  $ids = db_select('agileissues_stories', 'ais')
+    ->fields('ais', array('backlog_id'))
+    ->condition('project_id', $project->id)
+    ->execute()
+    ->fetchAllKeyed(0, 0);
+  return agileissues_backlog_load_all($ids);
+}
+
+function agileissues_project_count_stories($project, $backlog = NULL) {
+  $q = db_select('agileissues_stories', 'ais')
+    ->condition('project_id', $project->id);
+  if (!empty($backlog)) {
+    $q->condition('backlog_id', $backlog->id);
+  }
+  return $q->countQuery()->execute()->fetchColumn();
+}
+
+function agileissues_render_notes($type, $object, $view_mode) {
+  $ids = db_select('agileissues_notes', 'ain')
+    ->condition('entity_type', $type)
+    ->condition('entity_id', $object->id)
+    ->fields('ain', array('id'))
+    ->execute()->fetchAllKeyed(0, 0);
+  $render = array(
+    '#theme' => 'agileissues_note_list',
+    '#ids' => $ids,
+    '#view_mode' => $view_mode,
+  );
+  print render($render);
+}
+
+function agileissues_theme() {
+  $path = drupal_get_path('module', 'agileissues') . '/templates';
+  return array(
+    'agileissues_changelog_entry' => array(
+      'render element' => 'change',
+      'template' => 'agile-changelog-entry',
+      'path' => $path,
+    ),
+    'agileissues_metrics_form' => array(
+      'render element' => 'form',
+      'template' => 'agile-metrics-form',
+      'path' => $path,
+    ),
+    'agileissues_note_list' => array(
+      'render element' => 'list',
+      'template' => 'agile-note-list',
+      'path' => $path,
+    ),
+    'agileissues_bar' => array(
+      'variables' => array(
+        'project' => NULL,
+        'story' => NULL,
+        'task' => NULL,
+        'mode' => 'main',
+        'type' => 'global',
+      ),
+      'file' => 'agileissues.theme.inc',
+    ),
+    'agileissues_story_list' => array(
+      'render element' => 'list',
+      'template' => 'agile-story-list',
+      'path' => $path,
+    ),
+    'agileissues_task_list' => array(
+      'render element' => 'list',
+      'template' => 'agile-task-list',
+      'path' => $path,
+    ),
+    'agileissues_frontend' => array(
+      'render element' => 'frontend',
+      'template' => 'agile-frontend',
+      'path' => $path,
+    ),
+    'agileissues_project_backlog_short' => array(
+      'render element' => 'elements',
+      'template' => 'agile-project-backlog-short',
+      'path' => $path,
+    ),
+    'agileissues_project_sprint_short' => array(
+      'render element' => 'elements',
+      'template' => 'agile-project-sprint-short',
+      'path' => $path,
+    ),
+    'agileissues_story_form' => array(
+      'render element' => 'form',
+      'template' => 'agile-story-form',
+      'path' => $path,
+    ),
+    'agileissues_manage_stories_form' => array(
+      'render element' => 'form',
+      'template' => 'agile-manage-stories-form',
+      'path' => $path,
+    ),
+    'agileissues_manage_tasks_form' => array(
+      'render element' => 'form',
+      'template' => 'agile-manage-tasks-form',
+      'path' => $path,
+    ),
+    'agileissues_metrics_form' => array(
+      'render element' => 'form',
+      'template' => 'agile-metrics-form',
+      'path' => $path,
+    ),
+    'agileissues_search_form' => array(
+      'render element' => 'form',
+      'template' => 'agile-search',
+      'path' => $path,
+    ),
+    'agileissues_search_results' => array(
+      'render element' => 'results',
+      'template' => 'agile-search-results',
+      'path' => $path,
+    ),
+  );
+}
+
+function agileissues_rebuild_form_submit($form, &$form_state) {
+  $form_state['rebuild'] = TRUE;
+}
+
+function agileissues_backlog_delete($backlog, $tx = NULL) {
+  return entity_get_controller('agile_backlog')->delete(array($backlog->id), $tx) !== FALSE;
+}
+
+function agileissues_reassign_story_backlog($from_id, $to_id) {
+  db_update('agileissues_stories')
+    ->condition('backlog_id', $from_id)
+    ->fields(array(
+        'backlog_id' => $to_id,
+    ))
+    ->execute();
+}
+
+function agileissues_project_delete($project, $tx = NULL) {
+  return entity_get_controller('agile_project')->delete(array($project->id), $tx) !== FALSE;
+}
+
+function agileissues_reassign_story_project($from_id, $to_id) {
+  db_update('agileissues_stories')
+    ->condition('project_id', $from_id)
+    ->fields(array(
+        'project_id' => $to_id,
+    ))
+    ->execute();
+}
+
+function agileissues_reassign_sprint_project($from_id, $to_id) {
+  db_update('agileissues_sprints')
+    ->condition('project_id', $from_id)
+    ->fields(array(
+        'project_id' => $to_id,
+    ))
+    ->execute();
+}
+
+function agileissues_sprint_delete($sprint, $tx = NULL) {
+  return entity_get_controller('agile_sprint')->delete(array($sprint->id), $tx) !== FALSE;
+}
+
+function agileissues_reassign_task_sprint($from_id, $to_id) {
+  db_update('agileissues_tasks')
+    ->condition('sprint_id', $from_id)
+    ->fields(array(
+        'sprint_id' => $to_id,
+    ))
+    ->execute();
+}
+
+function agileissues_project_type_exists($name) {
+  $bundle = agileissues_load_bundle('project', $name);
+  return !empty($bundle);
+}
+
+function agileissues_project_type_load($name) { return agileissues_load_bundle('project', $name); }
+
+function agileissues_story_type_exists($name) {
+  $bundle = agileissues_load_bundle('story', $name);
+  return !empty($bundle);
+}
+
+function agileissues_story_type_load($name) { return agileissues_load_bundle('story', $name); }
+
+function agileissues_task_type_exists($name) {
+  $bundle = agileissues_load_bundle('task', $name);
+  return !empty($bundle);
+}
+
+function agileissues_task_type_load($name) { return agileissues_load_bundle('task', $name); }
+
+function agileissues_backlog_type_exists($name) {
+  $bundle = agileissues_load_bundle('backlog', $name);
+  return !empty($bundle);
+}
+
+function agileissues_backlog_type_load($name) { return agileissues_load_bundle('backlog', $name); }
+
+function agileissues_sprint_type_exists($name) {
+  $bundle = agileissues_load_bundle('sprint', $name);
+  return !empty($bundle);
+}
+
+function agileissues_sprint_type_load($name) { return agileissues_load_bundle('sprint', $name); }
+
+function agileissues_delete_bundle($singular, $type) {
+  $lookup = array(
+      'project' => 'projects',
+      'story' => 'stories',
+      'backlog' => 'backlogs',
+      'task' => 'tasks',
+      'sprint' => 'sprints',
+  );
+  $children = db_select('agileissues_' . $lookup[$singular], 'e')
+          ->fields('e', array('id'))
+          ->condition('type', $type)
+          ->execute()
+          ->fetchAllKeyed(0, 0);
+  $success = db_delete('agileissues_' . $singular . '_types')
+          ->condition('machine_name', $type)
+          ->execute() !== FALSE;
+  if ($success) {
+    foreach ($children as $id) {
+      $success = entity_delete('agile_' . $singular, $id) && $success;
+    }
+  }
+  else {
+    drupal_set_message('bad');
+  }
+  return $success;
+}
+
+function agileissues_story_save($story) {
+  return entity_get_controller('agile_story')->save($story);
+}
+
+function agileissues_load_bundle($singular, $type) {
+  $bundles = agileissues_load_bundles_of_type($singular);
+  if (isset($bundles[$type])) {
+    return (object) array(
+      'label' => $bundles[$type],
+      'machine_name' => $type,
+    );
+  }
+  return NULL;
+}
+
+function agileissues_save_bundle($singular, $bundle) {
+  return db_merge('agileissues_' . $singular . '_types')
+          ->key(array('machine_name' => $bundle->machine_name))
+          ->fields((array) $bundle)
+          ->execute() !== FALSE;
+}
+
+function agileissues_load_bundles_of_type($singular) {
+  return db_select('agileissues_' . $singular . '_types', 'et')
+          ->fields('et', array('machine_name', 'label'))
+          ->orderBy('label')
+          ->execute()
+          ->fetchAllKeyed();
+}
+
+function agileissues_backend_access() {
+  return user_access('manage agile projects') ||
+      user_access('manage agile sprints') ||
+      user_access('manage agile backlogs');
+}
+
+function agileissues_permission() {
+  return array(
+    'manage agile entities' => array(
+      'title' => t('Manage agile entities'),
+    ),
+    'manage agile projects' => array(
+      'title' => t('Manage agile projects'),  
+    ),
+    'manage agile backlogs' => array(
+      'title' => t('Manage agile backlogs'),
+    ),
+    'manage agile sprints' => array(
+      'title' => t('Manage agile sprints'),
+    ),
+    'view own agile stories' => array(
+      'title' => t('View own agile stories'),
+    ),
+    'view all agile stories' => array(
+      'title' => t('View all agile stories'),
+    ),
+    'edit own agile stories' => array(
+      'title' => t('Edit own agile stories'),
+    ),
+    'edit all agile stories' => array(
+      'title' => t('Edit all agile stories'),
+    ),
+    'open new agile stories' => array(
+      'title' => t('Open new agile stories'),
+    ),
+    'delete agile stories' => array(
+      'title' => t('Delete agile stories'),
+    ),
+    'manage internal story data' => array(
+      'title' => t('Manage internal story data'),
+    ),
+    'add agile task notes' => array(
+      'title' => t('Add agile task notes'),
+    ),
+    'add agile story notes' => array(
+      'title' => t('Add agile story notes'),
+    ),
+    'provide agile hours' => array(
+      'title' => t('Provide agile hours'),
+    ),
+    'view own agile tasks' => array(
+      'title' => t('View own agile tasks'),
+    ),
+    'view all agile tasks' => array(
+      'title' => t('View all agile tasks'),
+    ),
+    'edit own agile tasks' => array(
+      'title' => t('Edit own agile tasks'),
+    ),
+    'edit all agile tasks' => array(
+      'title' => t('Edit all agile tasks'),
+    ),
+    'open new agile tasks' => array(
+      'title' => t('Open new agile tasks'),
+    ),
+    'delete agile tasks' => array(
+      'title' => t('Delete agile tasks'),
+    ),
+    'manage internal task data' => array(
+      'title' => t('Manage internal task data'),
+    ),
+    'own agile tasks' => array(
+      'title' => t('Become the owner of agile tasks'),
+    ),
+    'own agile stories' => array(
+      'title' => t('Become the owner of agile stories'),
+    ),
+    'manage agile stories' => array(
+      'title' => t('Manage agile stories'),
+    ),
+    'manage agile tasks' => array(
+      'title' => t('Manage agile tasks'),
+    ),
+    'view agile statistics' => array(
+      'title' => t('View agile statistics'),
+    ),
+  );
+}
+
+function agileissues_frontend_access() {
+  $check = array('open new agile stories');
+  foreach ($check as $permission) {
+    if (user_access($permission)) {
+      return TRUE;
+    }
+  }
+  return FALSE;
+}
+
+function agileissues_search_access() {
+  $valid = array('manage agile tasks', 'manage agile stories', 'view all agile tasks', 'view own agile tasks');
+  foreach ($valid as $perm) {
+    if (user_access($perm)) {
+      return TRUE;
+    }
+  }
+  return FALSE;
+}
+
+function agileissues_project_access($project) {
+  $valid = array('manage agile tasks', 'manage agile stories', 'view all agile tasks', 'view own agile tasks');
+  foreach ($valid as $perm) {
+    if (user_access($perm)) {
+      return TRUE;
+    }
+  }
+  return FALSE;
+}
+
+function agileissues_task_access($type, $task) {
+  if (user_access('manage agile tasks') || user_access('manage internal task data')) {
+    return TRUE;
+  }
+  if (user_access($type . ' all agile tasks')) {
+    return TRUE;
+  }
+  global $user;
+  if ($task->uid == $user->uid) {
+    return user_access($type . ' own agile tasks');
+  }
+  return FALSE;
+}
+
+function agileissues_story_access($type, $story) {
+  if (user_access('manage agile stories') || user_access('manage internal story data')) {
+    return TRUE;
+  }
+  if (user_access($type . ' all agile stories')) {
+    return TRUE;
+  }
+  global $user;
+  if ($story->reporting_uid == $user->uid ||
+    $story->primary_uid == $user->uid) {
+    return user_access($type . ' own agile stories');
+  }
+  return FALSE;
+}
+
+function agileissues_metrics_form_callback($form, &$form_state) {
+  return $form['results'];
+}
+
+function agileissues_autocomplete_access() {
+  $valid = array('manage internal story data', 'manage internal task data');
+  foreach ($valid as $perm) {
+    if (user_access($perm)) {
+      return TRUE;
+    }
+  }
+  return FALSE;
+}
+
+function agileissues_relationship_autocomplete($string) {
+  $results = array();
+  $stories = db_select('agileissues_stories', 'ais')
+    ->condition('title', '%' . $string . '%', 'LIKE')
+    ->fields('ais', array('id', 'title'))
+    ->execute()->fetchAllKeyed(0, 1);
+  foreach ($stories as $key => $title) {
+    $results['story|' . $key] = $title;
+  }
+  $tasks = db_select('agileissues_tasks', 'ais')
+    ->condition('title', '%' . $string . '%', 'LIKE')
+    ->fields('ais', array('id', 'title'))
+    ->execute()->fetchAllKeyed(0, 1);
+  foreach ($tasks as $key => $title) {
+    $results['task|' . $key] = $title;
+  }
+  drupal_json_output($results);
+  drupal_exit();
+}
+
+function agileissues_menu() {
+  $menu = array(
+    'system/ajax/autocomplete-relationship' => array(
+      'title' => 'Autocomplete Relationship',
+      'page callback' => 'agileissues_relationship_autocomplete',
+      'access callback' => TRUE,
+      'type' => MENU_CALLBACK,
+    ),
+    'agile' => array(
+      'title' => 'Agile Story Management',
+      'page callback' => 'agileissues_frontend_page',
+      'access callback' => 'agileissues_frontend_access',
+      'file' => 'agileissues.pages.inc',
+    ),
+    'agile/project/%agileissues_project/stats' => array(
+      'title' => 'Statistics',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('agileissues_metrics_form', 2),
+      'access arguments' => array('view agile statistics'),
+      'file' => 'agileissues.pages.inc',
+    ),
+    'agile/search' => array(
+      'title' => 'Search Agile Stories & Tasks',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('agileissues_search_form'),
+      'access callback' => 'agileissues_search_access',
+      'file' => 'agileissues.pages.inc',
+    ),
+    'agile/search/%' => array(
+      'title' => 'Search Agile Stories & Tasks',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('agileissues_search_form', 2),
+      'access callback' => 'agileissues_search_access',
+      'file' => 'agileissues.pages.inc',
+    ),
+    'agile/open-request/%ctools_js' => array(
+      'title' => 'Create Story',
+      'page callback' => 'agileissues_get_modal_form',
+      'page arguments' => array('agileissues_story_form', 2),
+      'access arguments' => array('open new agile stories'),
+      'file' => 'agileissues.pages.inc',
+      'type' => MENU_CALLBACK,
+    ),
+    'agile/story/%agileissues_story/%ctools_js' => array(
+      'title' => 'View Story',
+      'page callback' => 'agileissues_get_content',
+      'page arguments' => array('agileissues_story_page', 3, 2),
+      'access callback' => 'agileissues_story_access',
+      'access arguments' => array('view', 2),
+      'file' => 'agileissues.pages.inc',
+      'type' => MENU_CALLBACK,
+    ),
+    'agile/story/%agileissues_story/reassign-backlog/%ctools_js' => array(
+      'title' => 'Change the story\'s backlog',
+      'page callback' => 'agileissues_get_modal_form',
+      'page arguments' => array('agileissues_story_backlog_form', 4, 2),
+      'access arguments' => array('manage internal story data'),
+      'file' => 'agileissues.pages.inc',
+      'type' => MENU_CALLBACK,
+    ),
+    'agile/task/%agileissues_task/reassign-sprint/%ctools_js' => array(
+      'title' => 'Change the task\'s sprint',
+      'page callback' => 'agileissues_get_modal_form',
+      'page arguments' => array('agileissues_task_sprint_form', 4, 2),
+      'access arguments' => array('manage internal task data'),
+      'file' => 'agileissues.pages.inc',
+      'type' => MENU_CALLBACK,
+    ),
+    'agile/backlog/%agileissues_backlog/open' => array(
+      'title' => 'Open the backlog for requests',
+      'page callback' => 'agileissues_ajax_modify_backlog_status',
+      'page arguments' => array(3, 'O'),
+      'access arguments' => array('manage agile backlogs'),
+      'file' => 'agileissues.pages.inc',
+      'type' => MENU_CALLBACK,
+    ),
+    'agile/backlog/%agileissues_backlog/lock' => array(
+      'title' => 'Lock the backlog for release',
+      'page callback' => 'agileissues_ajax_modify_backlog_status',
+      'page arguments' => array(3, 'L'),
+      'access arguments' => array('manage agile backlogs'),
+      'file' => 'agileissues.pages.inc',
+      'type' => MENU_CALLBACK,
+    ),
+    'agile/backlog/%agileissues_backlog/complete' => array(
+      'title' => 'Mark the backlog as being completed',
+      'page callback' => 'agileissues_ajax_modify_backlog_status',
+      'page arguments' => array(3, 'C'),
+      'access arguments' => array('manage agile backlogs'),
+      'file' => 'agileissues.pages.inc',
+      'type' => MENU_CALLBACK,
+    ),
+    'agile/story/%agileissues_story/edit/%ctools_js' => array(
+      'title' => 'Edit Story',
+      'page callback' => 'agileissues_get_modal_form',
+      'page arguments' => array('agileissues_story_form', 4, 2),
+      'access callback' => 'agileissues_story_access',
+      'access arguments' => array('edit', 2),
+      'file' => 'agileissues.pages.inc',
+      'type' => MENU_CALLBACK,
+    ),
+    'agile/story/%agileissues_story/move/%ctools_js' => array(
+      'title' => 'Move Story',
+      'page callback' => 'agileissues_get_modal_form',
+      'page arguments' => array('agileissues_story_move_form', 4, 2),
+      'access callback' => 'agileissues_story_access',
+      'access arguments' => array('move', 2),
+      'file' => 'agileissues.pages.inc',
+      'type' => MENU_CALLBACK,
+    ),
+    'agile/story/%agileissues_story/delete/%ctools_js' => array(
+      'title' => 'Delete Story',
+      'page callback' => 'agileissues_get_modal_form',
+      'page arguments' => array('agileissues_story_delete_form', 4, 2),
+      'access callback' => 'agileissues_story_access',
+      'access arguments' => array('delete', 2),
+      'file' => 'agileissues.pages.inc',
+      'type' => MENU_CALLBACK,
+    ),
+    'agile/story/%agileissues_story/note/%ctools_js' => array(
+      'title' => 'Add note to story',
+      'page callback' => 'agileissues_get_modal_form',
+      'page arguments' => array('agileissues_note_form', 4, 'story', 2),
+      'access arguments' => array('add agile story notes'),
+      'file' => 'agileissues.pages.inc',
+      'type' => MENU_CALLBACK,
+    ),
+    'agile/story/%agileissues_story/task/%ctools_js' => array(
+      'title' => 'Add task to story',
+      'page callback' => 'agileissues_get_modal_form',
+      'page arguments' => array('agileissues_task_form', 4, NULL, 2),
+      'access arguments' => array('open new agile tasks'),
+      'file' => 'agileissues.pages.inc',
+      'type' => MENU_CALLBACK,
+    ),
+    'agile/task/%agileissues_task/%ctools_js' => array(
+      'title' => 'View',
+      'page callback' => 'agileissues_get_content',
+      'page arguments' => array('agileissues_task_page', 3, 2),
+      'access callback' => 'agileissues_task_access',
+      'access arguments' => array('view', 2),
+      'file' => 'agileissues.pages.inc',
+      'type' => MENU_CALLBACK,
+    ),
+    'agile/task/%agileissues_task/edit/%ctools_js' => array(
+      'title' => 'Edit',
+      'page callback' => 'agileissues_get_modal_form',
+      'page arguments' => array('agileissues_task_form', 4, 2),
+      'access callback' => 'agileissues_task_access',
+      'access arguments' => array('edit', 2),
+      'file' => 'agileissues.pages.inc',
+      'type' => MENU_CALLBACK,
+    ),
+    'agile/task/%agileissues_task/delete/%ctools_js' => array(
+      'title' => 'Edit',
+      'page callback' => 'agileissues_get_modal_form',
+      'page arguments' => array('agileissues_task_delete_form', 4, 2),
+      'access callback' => 'agileissues_task_access',
+      'access arguments' => array('delete', 2),
+      'file' => 'agileissues.pages.inc',
+      'type' => MENU_CALLBACK,
+    ),
+    'agile/task/%agileissues_task/note/%ctools_js' => array(
+      'title' => 'Add note to task',
+      'page callback' => 'agileissues_get_modal_form',
+      'page arguments' => array('agileissues_note_form', 4, 'task', 2),
+      'access arguments' => array('add agile task notes'),
+      'file' => 'agileissues.pages.inc',
+      'type' => MENU_CALLBACK,
+    ),
+    'agile/task/%agileissues_task/assign/%ctools_js' => array(
+      'title' => 'Assign task to a user',
+      'page callback' => 'agileissues_get_modal_form',
+      'page arguments' => array('agileissues_task_assign_form', 4, 2),
+      'access arguments' => array('manage internal task data'),
+      'file' => 'agileissues.pages.inc',
+      'type' => MENU_CALLBACK,
+    ),
+    'agile/my-tasks' => array(
+      'title' => 'Assigned Tasks',
+      'page callback' => 'agileissues_my_tasks_page',
+      'access arguments' => array('own agile tasks'),
+      'file' => 'agileissues.pages.inc',
+    ),
+    'agile/my-stories' => array(
+      'title' => 'Assigned Stories',
+      'page callback' => 'agileissues_my_stories_page',
+      'access arguments' => array('own agile stories'),
+      'file' => 'agileissues.pages.inc',
+    ),
+    'agile/my-reported-stories' => array(
+      'title' => 'My Stories',
+      'page callback' => 'agileissues_my_reported_stories_page',
+      'access arguments' => array('open new agile stories'),
+      'file' => 'agileissues.pages.inc',
+    ),
+    'agile/project/%agileissues_project' => array(
+      'title' => 'View Project',
+      'page callback' => 'agileissues_project_page',
+      'page arguments' => array(2),
+      'access callback' => 'agileissues_project_access',
+      'access arguments' => array(2),
+      'file' => 'agileissues.pages.inc',
+    ),
+    'agile/project/%agileissues_project/open-request/%ctools_js' => array(
+      'title' => 'Create Story',
+      'page callback' => 'agileissues_get_modal_form',
+      'page arguments' => array('agileissues_story_form', 4, NULL, 2),
+      'access arguments' => array('open new agile stories'),
+      'file' => 'agileissues.pages.inc',
+      'type' => MENU_CALLBACK,
+    ),
+    'agile/project/%agileissues_project/my-stories' => array(
+      'title' => 'Assigned Stories',
+      'page callback' => 'agileissues_my_stories_page',
+      'page arguments' => array(2),
+      'access arguments' => array('own agile stories'),
+      'file' => 'agileissues.pages.inc',
+    ),
+    'agile/project/%agileissues_project/my-tasks' => array(
+      'title' => 'Assigned Tasks',
+      'page callback' => 'agileissues_my_tasks_page',
+      'page arguments' => array(2),
+      'access arguments' => array('own agile tasks'),
+      'file' => 'agileissues.pages.inc',
+    ),
+    'agile/project/%agileissues_project/my-reported-stories' => array(
+      'title' => 'My Stories',
+      'page callback' => 'agileissues_my_reported_stories_page',
+      'page arguments' => array(2),
+      'access arguments' => array('open new agile stories'),
+      'file' => 'agileissues.pages.inc',
+    ),
+    'agile/project/%agileissues_project/story-management' => array(
+      'title' => 'Story Management',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('agileissues_manage_stories_form', 2),
+      'access arguments' => array('manage agile stories'),
+      'file' => 'agileissues.pages.inc',
+    ),
+    'agile/project/%agileissues_project/story-management/%agileissues_backlog' => array(
+      'title' => 'Story Management',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('agileissues_manage_stories_form', 2, 4),
+      'access arguments' => array('manage agile stories'),
+      'file' => 'agileissues.pages.inc',
+    ),
+    'agile/project/%agileissues_project/task-management' => array(
+      'title' => 'Task Management',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('agileissues_manage_tasks_form', 2),
+      'access arguments' => array('manage agile tasks'),
+      'file' => 'agileissues.pages.inc',
+    ),
+    'agile/project/%agileissues_project/task-management/%agileissues_sprint' => array(
+      'title' => 'Task Management',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('agileissues_manage_tasks_form', 2, 4),
+      'access arguments' => array('manage agile tasks'),
+      'file' => 'agileissues.pages.inc',
+    ),
+    'admin/content/agile' => array(
+      'title' => 'Agile',
+      'page callback' => 'agileissues_backend_page',
+      'access callback' => 'agileissues_backend_access',
+      'file' => 'agileissues.backend.inc',
+      'type' => MENU_LOCAL_TASK,
+    ),
+    'admin/content/agile/project' => array(
+      'title' => 'Projects',
+      'type' => MENU_NORMAL_ITEM,
+      'page callback' => 'agileissues_projects_backend_page',
+      'access arguments' => array('manage agile projects'),
+      'file' => 'agileissues.backend.inc',
+    ),
+    'admin/content/agile/project/new' => array(
+      'title' => 'New Project',
+      'type' => MENU_LOCAL_ACTION,
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('agileissues_project_form'),
+      'access arguments' => array('manage agile projects'),
+      'file' => 'agileissues.backend.inc',
+    ),
+    'admin/content/agile/project/%agileissues_project' => array(
+      'title' => 'Edit Project',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('agileissues_project_form', 4),
+      'access arguments' => array('manage agile projects'),
+      'file' => 'agileissues.backend.inc',
+    ),
+    'admin/content/agile/project/%agileissues_project/edit' => array(
+      'title' => 'Edit',
+      'access arguments' => array('manage agile projects'),
+      'file' => 'agileissues.backend.inc',
+      'weight' => -10,
+      'type' => MENU_DEFAULT_LOCAL_TASK & MENU_LOCAL_TASK
+    ),
+    'admin/content/agile/project/%agileissues_project/delete' => array(
+      'title' => 'Delete',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('agileissues_project_delete_form', 4),
+      'access arguments' => array('manage agile projects'),
+      'file' => 'agileissues.backend.inc',
+      'type' => MENU_LOCAL_TASK,
+    ),
+    'admin/content/agile/backlog' => array(
+      'title' => 'Backlogs',
+      'type' => MENU_NORMAL_ITEM,
+      'page callback' => 'agileissues_backlogs_backend_page',
+      'access arguments' => array('manage agile backlogs'),
+      'file' => 'agileissues.backend.inc',
+    ),
+    'admin/content/agile/backlog/new' => array(
+      'title' => 'New Backlog',
+      'type' => MENU_LOCAL_ACTION,
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('agileissues_backlog_form'),
+      'access arguments' => array('manage agile backlogs'),
+      'file' => 'agileissues.backend.inc',
+    ),
+    'admin/content/agile/backlog/%agileissues_backlog' => array(
+      'title' => 'Edit Backlog',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('agileissues_backlog_form', 4),
+      'access arguments' => array('manage agile backlogs'),
+      'file' => 'agileissues.backend.inc',
+    ),
+    'admin/content/agile/backlog/%agileissues_backlog/edit' => array(
+      'title' => 'Edit',
+      'access arguments' => array('manage agile backlogs'),
+      'file' => 'agileissues.backend.inc',
+      'weight' => -10,
+      'type' => MENU_DEFAULT_LOCAL_TASK & MENU_LOCAL_TASK
+    ),
+    'admin/content/agile/backlog/%agileissues_backlog/delete' => array(
+      'title' => 'Delete',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('agileissues_backlog_delete_form', 4),
+      'access arguments' => array('manage agile backlogs'),
+      'file' => 'agileissues.backend.inc',
+      'type' => MENU_LOCAL_TASK,
+    ),
+    'admin/content/agile/sprint' => array(
+      'title' => 'Sprints',
+      'type' => MENU_NORMAL_ITEM,
+      'page callback' => 'agileissues_sprints_backend_page',
+      'access arguments' => array('manage agile sprints'),
+      'file' => 'agileissues.backend.inc',
+    ),
+    'admin/content/agile/sprint/new' => array(
+      'title' => 'New Sprint',
+      'type' => MENU_LOCAL_ACTION,
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('agileissues_sprint_form'),
+      'access arguments' => array('manage agile sprints'),
+      'file' => 'agileissues.backend.inc',
+    ),
+    'admin/content/agile/sprint/%agileissues_sprint' => array(
+      'title' => 'Edit Sprint',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('agileissues_sprint_form', 4),
+      'access arguments' => array('manage agile sprints'),
+      'file' => 'agileissues.backend.inc',
+    ),
+    'admin/content/agile/sprint/%agileissues_sprint/edit' => array(
+      'title' => 'Edit',
+      'access arguments' => array('manage agile sprints'),
+      'file' => 'agileissues.backend.inc',
+      'weight' => -10,
+      'type' => MENU_DEFAULT_LOCAL_TASK & MENU_LOCAL_TASK
+    ),
+    'admin/content/agile/sprint/%agileissues_sprint/delete' => array(
+      'title' => 'Delete',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('agileissues_sprint_delete_form', 4),
+      'access arguments' => array('manage agile sprints'),
+      'file' => 'agileissues.backend.inc',
+      'type' => MENU_LOCAL_TASK,
+    ),
+  );
+  $types = array(
+    'projects' => 'project',
+    'stories' => 'story',
+    'tasks' => 'task',
+    'backlogs' => 'backlog',
+    'sprints' => 'sprint',
+  );
+  $menu['admin/structure/agile'] = array(
+    'title' => 'Agile Structures',
+    'description' => 'Manage the different agile structures',
+    'page callback' => 'agileissues_structure_page',
+    'access arguments' => array('manage agile issue entities'),
+    'file' => 'agileissues.admin.inc',
+  );
+  foreach ($types as $plural => $singular) {
+    $menu['admin/structure/agile/' . $singular] = array(
+      'title' => ucwords($plural) . ' Types',
+      'page callback' => 'agileissues_entity_bundle_list_page',
+      'page arguments' => array($singular),
+      'access arguments' => array('manage agile issue entities'),
+      'file' => 'agileissues.admin.inc',
+    );
+    $menu['admin/structure/agile/' . $singular . '/new'] = array(
+      'title' => 'Add new  ' . $singular . ' type',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('agileissues_entity_bundle_form', $singular),
+      'access arguments' => array('manage agile issue entities'),
+      'file' => 'agileissues.admin.inc',
+      'type' => MENU_LOCAL_ACTION,
+    );
+    $menu['admin/structure/agile/' . $singular . '/%agileissues_' . $singular . '_type'] = array(
+      'title' => 'Edit',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('agileissues_entity_bundle_form', $singular, 4),
+      'access arguments' => array('manage agile issue entities'),
+      'file' => 'agileissues.admin.inc',
+    );
+    $menu['admin/structure/agile/' . $singular . '/%agileissues_' . $singular . '_type/edit'] = array(
+      'title' => 'Edit',
+      'weight' => -10,
+      'access arguments' => array('manage agile issue entities'),
+      'file' => 'agileissues.admin.inc',
+      'type' => MENU_LOCAL_TASK & MENU_DEFAULT_LOCAL_TASK,
+    );
+    $menu['admin/structure/agile/' . $singular . '/%agileissues_' . $singular . '_type/delete'] = array(
+      'title' => 'Delete',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('agileissues_entity_bundle_delete_form', $singular, 4),
+      'access arguments' => array('manage agile issue entities'),
+      'file' => 'agileissues.admin.inc',
+      'type' => MENU_LOCAL_TASK,
+    );
+  }
+  return $menu;
+}
+
+function agileissues_entity_info() {
+  $bundles = array();
+  $types = array(
+    'agile_project' => array('table' => 'agileissues_project_types', 'path' => 'admin/structure/agile/project/%agileissues_project_type', 'real' => 'admin/structure/agile/project'),
+    'agile_story' => array('table' => 'agileissues_story_types', 'path' => 'admin/structure/agile/story/%agileissues_story_type', 'real' => 'admin/structure/agile/story'),
+    'agile_task' => array('table' => 'agileissues_task_types', 'path' => 'admin/structure/agile/task/%agileissues_task_type', 'real' => 'admin/structure/agile/task'),
+    'agile_backlog' => array('table' => 'agileissues_backlog_types', 'path' => 'admin/structure/agile/backlog/%agileissues_backlog_type', 'real' => 'admin/structure/agile/backlog'),
+    'agile_sprint' => array('table' => 'agileissues_sprint_types', 'path' => 'admin/structure/agile/sprint/%agileissues_sprint_type', 'real' => 'admin/structure/agile/sprint'),
+  );
+  foreach ($types as $entity => $info) {
+    $bundles[$entity] = array();
+    $etypes = db_select($info['table'], 'tt')
+            ->fields('tt')
+            ->execute();
+    foreach ($etypes as $row) {
+      $bundles[$entity][$row->machine_name] = array(
+        'label' => t($row->label),  
+        'admin' => array(
+          'path' => $info['path'],
+          'bundle argument' => 4,
+          'real path' => $info['real'] . '/' . $row->machine_name,
+          'access arguments' => array('manage agile issue entities'),
+        ),
+      );
+    }
+  }
+  $info = array();
+  $info['agile_project'] = array(
+    'label' => t('Agile Project'),
+    'controller class' => 'AgileProjectController',
+    'base table' => 'agileissues_projects',
+    'load hook' => 'agileissues_project_load',
+    'uri callback' => 'agileissues_project_uri',
+    'fieldable' => TRUE,
+    'entity keys' => array(
+      'id' => 'id',
+      'bundle' => 'type',
+      'label' => 'name',
+    ),
+    'bundle keys' => array(
+      'bundle' => 'machine_name',
+    ),
+    'bundles' => $bundles['agile_project'],
+    'view modes' => array(
+      'full' => array(
+        'label' => t('Full'),
+        'custom settings' => FALSE,
+      ),
+      'teaser' => array(
+        'label' => t('Teaser'),
+        'custom settings' => FALSE,
+      ),
+    ),
+  );
+  $info['agile_story'] = array(
+    'label' => t('Agile Story'),
+    'controller class' => 'AgileStoryController',
+    'base table' => 'agileissues_stories',
+    'load hook' => 'agileissues_story_load',
+    'uri callback' => 'agileissues_story_uri',
+    'fieldable' => TRUE,
+    'entity keys' => array(
+      'id' => 'id',
+      'bundle' => 'type',
+      'label' => 'title',
+    ),
+    'bundle keys' => array(
+      'bundle' => 'machine_name',
+    ),
+    'bundles' => $bundles['agile_story'],
+    'view modes' => array(
+      'full' => array(
+        'label' => t('Full'),
+        'custom settings' => FALSE,
+      ),
+      'teaser' => array(
+        'label' => t('Teaser'),
+        'custom settings' => FALSE,
+      ),
+    ),
+  );
+  $info['agile_backlog'] = array(
+    'label' => t('Agile Backlog'),
+    'controller class' => 'AgileBacklogController',
+    'base table' => 'agileissues_backlogs',
+    'load hook' => 'agileissues_backlog_load',
+    'uri callback' => 'agileissues_backlog_uri',
+    'fieldable' => TRUE,
+    'entity keys' => array(
+      'id' => 'id',
+      'bundle' => 'type',
+      'label' => 'name',
+    ),
+    'bundle keys' => array(
+      'bundle' => 'machine_name',
+    ),
+    'bundles' => $bundles['agile_backlog'],
+    'view modes' => array(
+      'full' => array(
+        'label' => t('Full'),
+        'custom settings' => FALSE,
+      ),
+    ),
+  );
+  $info['agile_task'] = array(
+    'label' => t('Agile Task'),
+    'controller class' => 'AgileTaskController',
+    'base table' => 'agileissues_tasks',
+    'load hook' => 'agileissues_task_load',
+    'uri callback' => 'agileissues_task_uri',
+    'fieldable' => TRUE,
+    'entity keys' => array(
+      'id' => 'id',
+      'bundle' => 'type',
+      'label' => 'title',
+    ),
+    'bundle keys' => array(
+      'bundle' => 'machine_name',
+    ),
+    'bundles' => $bundles['agile_task'],
+    'view modes' => array(
+      'full' => array(
+        'label' => t('Full'),
+        'custom settings' => FALSE,
+      ),
+      'teaser' => array(
+        'label' => t('Teaser'),
+        'custom settings' => FALSE,
+      ),
+    ),
+  );
+  $info['agile_sprint'] = array(
+    'label' => t('Agile Sprint'),
+    'controller class' => 'AgileSprintController',
+    'base table' => 'agileissues_sprints',
+    'load hook' => 'agileissues_sprint_load',
+    'uri callback' => 'agileissues_sprint_uri',
+    'fieldable' => TRUE,
+    'entity keys' => array(
+      'id' => 'id',
+      'bundle' => 'type',
+      'label' => 'name',
+    ),
+    'bundle keys' => array(
+      'bundle' => 'machine_name',
+    ),
+    'bundles' => array(),
+    'view modes' => array(
+      'full' => array(
+        'label' => t('Full'),
+        'custom settings' => FALSE,
+      ),
+    ),
+  );
+  $info['agile_note'] = array(
+    'label' => t('Agile Note'),
+    'controller class' => 'AgileNoteController',
+    'base table' => 'agileissues_notes',
+    'load hook' => 'agileissues_note_load',
+    'uri callback' => 'agileissues_note_uri',
+    'fieldable' => TRUE,
+    'entity keys' => array(
+      'id' => 'id',
+      'label' => 'title',
+    ),
+    'view modes' => array(
+      'full' => array(
+        'label' => t('Full'),
+        'custom settings' => FALSE,
+      ),
+    ),
+  );
+  return $info;
+}
+
+function agileissues_project_load_all($ids = FALSE) {
+  $entities = entity_get_controller('agile_project')->load($ids);
+  return $entities;
+}
+
+function agileissues_project_load($id) {
+  $entities = agileissues_project_load_all(array($id));
+  return reset($entities);
+}
+
+function agileissues_project_save($project) {
+  return entity_get_controller('agile_project')->save($project) !== FALSE;
+}
+
+function agileissues_preprocess_entity(&$vars) {
+  if (in_array($vars['elements']['#entity_type'], array('agile_project', 'agile_task', 'agile_story', 'agile_note'))) {
+    $base = array_shift($vars['theme_hook_suggestions']);
+    $type = array_shift($vars['theme_hook_suggestions']);
+    array_unshift($vars['theme_hook_suggestions'], $vars['elements']['#entity_type'] . '__' . $vars['elements']['#view_mode']);
+    array_unshift($vars['theme_hook_suggestions'], $type);
+    array_unshift($vars['theme_hook_suggestions'], $base);
+  }
+}
+
+function agileissues_project_uri($project) {
+  return array(
+    'path' => 'agile/project/' . $project->id,
+  );
+}
+
+function agileissues_story_load($story_id) {
+  $entities = agileissues_story_load_multiple(array($story_id));
+  return reset($entities);
+}
+
+function agileissues_story_load_multiple($ids = FALSE) {
+  return entity_get_controller('agile_story')->load($ids);
+}
+
+function agileissues_story_uri($story) {
+  return array(
+    'path' => 'agile/story/' . $story->id . '/nojs',
+  );
+}
+
+function agileissues_backlog_load_all($ids = FALSE) {
+  $entities = entity_get_controller('agile_backlog')->load($ids);
+  return $entities;
+}
+
+function agileissues_backlog_load($id) {
+  $entities = agileissues_backlog_load_all(array($id));
+  return reset($entities);
+}
+
+function agileissues_backlog_save($backlog) {
+  return entity_get_controller('agile_backlog')->save($backlog) !== FALSE;
+}
+
+function agileissues_backlog_uri($backlog) {
+  
+}
+
+function agileissues_task_load($task_id) {
+  $controller = entity_get_controller('agile_task');
+  $entities = $controller->load(array($task_id));
+  return reset($entities);
+}
+
+function agileissues_task_uri($task) {
+  return array(
+    'path' => 'agile/task/' . $task->id,
+  );
+}
+
+function agileissues_sprint_load_all($ids = FALSE) {
+  $entities = entity_get_controller('agile_sprint')->load($ids);
+  return $entities;
+}
+
+function agileissues_sprint_load($id) {
+  $entities = agileissues_sprint_load_all(array($id));
+  return reset($entities);
+}
+
+function agileissues_sprint_save($sprint) {
+  return entity_get_controller('agile_sprint')->save($sprint) !== FALSE;
+}
+
+
+function agileissues_sprint_uri($sprint) {
+  
+}
+
+function agileissues_note_uri($note) {
+  return array(
+    'path' => '<front>',
+  );
+}

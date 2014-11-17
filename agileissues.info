@@ -1,0 +1,14 @@
+name = Agile Issue Tracker
+description = "Provides support for an extended Agile-like tracking system."
+core = 7.x
+
+dependencies[] = entity
+dependencies[] = ctools
+dependencies[] = autocomplete_deluxe
+
+files[] = classes/AgileBacklogController.php
+files[] = classes/AgileNoteController.php
+files[] = classes/AgileProjectController.php
+files[] = classes/AgileSprintController.php
+files[] = classes/AgileStoryController.php
+files[] = classes/AgileTaskController.php

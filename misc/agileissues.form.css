@@ -1,0 +1,37 @@
+.story-cross {
+  width: 20px;
+}
+div.ctools-modal-content .agile-story-form .form-item label {
+  width: auto;
+  float: none;
+}
+div.ctools-modal-content .agile-story-form .resizable-textarea {
+  margin: 0;
+}
+.agile-story-form-inset {
+  width: 25%;
+  float: left;
+  box-sizing: border-box;
+  background-color: #EEE;
+  border-radius: 4px;
+  padding: 6px 20px;
+}
+.agile-story-form-inset .form-autocomplete {
+  width: 80%;
+}
+.agile-story-form .link-field-column input.form-text {
+  width: 70%;
+}
+div.ctools-modal-content .agile-story-form .link-field-column label {
+  width: auto;
+  padding-right: 5px;
+}
+.agile-story-form-main {
+  width: 75%;
+  float: left;
+  padding-right: 20px;
+  box-sizing: border-box;
+}
+.modal-content .agile-story-form {
+  width: 90%;
+}
