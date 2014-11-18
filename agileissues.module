@@ -1443,7 +1443,7 @@ function agileissues_entity_info() {
     'bundle keys' => array(
       'bundle' => 'machine_name',
     ),
-    'bundles' => array(),
+    'bundles' => $bundles['agile_sprint'],
     'view modes' => array(
       'full' => array(
         'label' => t('Full'),
