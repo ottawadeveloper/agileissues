@@ -4,7 +4,6 @@ core = 7.x
 
 dependencies[] = entity
 dependencies[] = ctools
-dependencies[] = autocomplete_deluxe
 
 files[] = classes/AgileBacklogController.php
 files[] = classes/AgileNoteController.php
