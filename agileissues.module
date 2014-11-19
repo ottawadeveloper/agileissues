@@ -450,18 +450,22 @@ function agileissues_render_notes($type, $object, $view_mode) {
 }
 
 function agileissues_theme($existing, $type, $theme, $path) {
+  $path .= '/templates';
   return array(
     'agileissues_changelog_entry' => array(
       'render element' => 'change',
       'template' => 'agileissues-changelog-entry',
+      'path' => $path,
     ),
     'agileissues_metrics_form' => array(
       'render element' => 'form',
       'template' => 'agileissues-metrics-form',
+      'path' => $path,
     ),
     'agileissues_note_list' => array(
       'render element' => 'list',
       'template' => 'agileissues-note-list',
+      'path' => $path,
     ),
     'agileissues_bar' => array(
       'variables' => array(
@@ -476,46 +480,57 @@ function agileissues_theme($existing, $type, $theme, $path) {
     'agileissues_story_list' => array(
       'render element' => 'list',
       'template' => 'agileissues-story-list',
+      'path' => $path,
     ),
     'agileissues_task_list' => array(
       'render element' => 'list',
       'template' => 'agileissues-task-list',
+      'path' => $path,
     ),
     'agileissues_frontend' => array(
       'render element' => 'frontend',
       'template' => 'agileissues-frontend',
+      'path' => $path,
     ),
     'agileissues_project_backlog_short' => array(
       'render element' => 'elements',
       'template' => 'agileissues-project-backlog-short',
+      'path' => $path,
     ),
     'agileissues_project_sprint_short' => array(
       'render element' => 'elements',
       'template' => 'agileissues-project-sprint-short',
+      'path' => $path,
     ),
     'agileissues_story_form' => array(
       'render element' => 'form',
       'template' => 'agileissues-story-form',
+      'path' => $path,
     ),
     'agileissues_manage_stories_form' => array(
       'render element' => 'form',
       'template' => 'agileissues-manage-stories-form',
+      'path' => $path,
     ),
     'agileissues_manage_tasks_form' => array(
       'render element' => 'form',
       'template' => 'agileissues-manage-tasks-form',
+      'path' => $path,
     ),
     'agileissues_metrics_form' => array(
       'render element' => 'form',
       'template' => 'agileissues-metrics-form',
+      'path' => $path,
     ),
     'agileissues_search_form' => array(
       'render element' => 'form',
       'template' => 'agileissues-search',
+      'path' => $path,
     ),
     'agileissues_search_results' => array(
       'render element' => 'results',
       'template' => 'agileissues-search-results',
+      'path' => $path,
     ),
   );
 }
