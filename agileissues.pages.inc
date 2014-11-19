@@ -219,6 +219,9 @@ function agileissues_story_form($form, &$form_state, $story = NULL, $project = N
     '#type' => 'fieldset',
     '#title' => t('Relationships'),
     '#tree' => TRUE,
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
+    '#weight' => 100,
   );
   $existing = array();
   if (!empty($story->id)) {
@@ -237,12 +240,11 @@ function agileissues_story_form($form, &$form_state, $story = NULL, $project = N
   for ($k = 0; $k < $form_state['num_rels']; $k++) {
     $form['relationships'][$k] = array(
       '#type' => 'fieldset',
-      '#collapsable' => TRUE,
-      '#collapsed' => TRUE,
-      '#weight' => 100,
       '#title' => t('Relationship @index', array(
         '@index' => $k + 1,
       )),
+      '#collapsible' => TRUE,
+      '#collapsed' => TRUE,
       'type' => array(
         '#type' => 'select',
         '#options' => $relationship_types,
