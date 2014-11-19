@@ -167,9 +167,9 @@ function agileissues_story_form($form, &$form_state, $story = NULL, $project = N
     $projects[$project->id] = t($project->name);
   }
   $users = array();
-  foreach (user_load_multiple(FALSE) as $user) {
-    if (user_access('own agile stories', $user)) {
-      $users[$user->uid] = $user->name;
+  foreach (user_load_multiple(FALSE) as $u) {
+    if (user_access('own agile stories', $u)) {
+      $users[$u->uid] = $u->name;
     }
   }
   $form += array(
@@ -692,9 +692,9 @@ function agileissues_task_form($form, &$form_state, $task = NULL, $story = NULL)
     '#access' => user_access('manage internal task data'),
   );
   $user_options = array();
-  foreach (user_load_multiple(FALSE) as $user) {
+  foreach (user_load_multiple(FALSE) as $u) {
     if (user_access('own agile tasks')) {
-      $user_options[$user->uid] = $user->name;
+      $user_options[$u->uid] = $u->name;
     }
   }
   $form['uid'] = array(
@@ -956,9 +956,9 @@ function agileissues_task_assign_form($form, &$form_state, $task) {
     '#access' => user_access('manage internal task data'),
   );
   $user_options = array();
-  foreach (user_load_multiple(FALSE) as $user) {
+  foreach (user_load_multiple(FALSE) as $u) {
     if (user_access('own agile tasks')) {
-      $user_options[$user->uid] = $user->name;
+      $user_options[$u->uid] = $u->name;
     }
   }
   $form['uid'] = array(
