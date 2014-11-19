@@ -449,8 +449,7 @@ function agileissues_render_notes($type, $object, $view_mode) {
   print render($render);
 }
 
-function agileissues_theme() {
-  $path = drupal_get_path('module', 'agileissues') . '/templates';
+function agileissues_theme($existing, $type, $theme, $path) {
   return array(
     'agileissues_changelog_entry' => array(
       'render element' => 'change',
