@@ -1430,6 +1430,7 @@ function agileissues_entity_info() {
   );
   $info['agile_sprint'] = array(
     'label' => t('Agile Sprint'),
+    'access callback' => 'agileissues_sprint_access',
     'controller class' => 'AgileSprintController',
     'base table' => 'agileissues_sprints',
     'load hook' => 'agileissues_sprint_load',
@@ -1470,6 +1471,13 @@ function agileissues_entity_info() {
     ),
   );
   return $info;
+}
+
+function agileissues_sprint_access($op, $entity = NULL, $account = NULL) {
+  if ($op === 'view') {
+    return TRUE;
+  }
+  return user_access('manage agile issue entities');
 }
 
 function agileissues_project_load_all($ids = FALSE) {
