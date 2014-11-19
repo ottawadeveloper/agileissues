@@ -243,6 +243,8 @@ function agileissues_story_form($form, &$form_state, $story = NULL, $project = N
         '#type' => 'select',
         '#options' => $relationship_types,
         '#title' => t('Relationship Type'),
+        '#empty_option' => t('None'),
+        '#empty_value' => '',
         '#default_value' => isset($existing[$k]) ? $existing[$k]['type'] : '',
       ),
       'object' => array(
@@ -316,7 +318,7 @@ function agileissues_clear_relationships($object, $type) {
 function agileissues_save_all_relationships($object, $type, &$form_state) {
   agileissues_clear_relationships($object, $type);
   foreach ($form_state['values']['relationships'] as $relationship) {
-    if (!empty($relationship['type'])) {
+    if (!empty($relationship['type']) && !empty($relationship['object'])) {
       agileissues_save_relationships($object, $type, $relationship['type'], $relationship['object']);
     }
   }
