@@ -232,10 +232,14 @@ function agileissues_story_form($form, &$form_state, $story = NULL, $project = N
     $relationship_types['l|' . $key] = $type['left_display'];
     $relationship_types['r|' . $key] = $type['right_display'];
   }
+  field_attach_form('agile_story', $story, $form, $form_state);
   ctools_include('ajax');
   for ($k = 0; $k < $form_state['num_rels']; $k++) {
     $form['relationships'][$k] = array(
       '#type' => 'fieldset',
+      '#collapsable' => TRUE,
+      '#collapsed' => TRUE,
+      '#weight' => 100,
       '#title' => t('Relationship @index', array(
         '@index' => $k + 1,
       )),
@@ -257,7 +261,6 @@ function agileissues_story_form($form, &$form_state, $story = NULL, $project = N
       ),
     );
   }
-  field_attach_form('agile_story', $story, $form, $form_state);
  
   if (!empty($story->id)) {
     $form['change_notes'] = array(
