@@ -359,7 +359,7 @@ function agileissues_load_relationships($object, $type) {
     $rels[$typeKey]['objects'][$obj_id] = $obj_id;
   }
   $actual = array();
-  foreach ($rel as $set) {
+  foreach ($rels as $set) {
     $actual[] = array(
       'type' => $set['type'],
       'object' => implode(',', $set['objects']),
