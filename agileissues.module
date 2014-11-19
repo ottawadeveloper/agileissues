@@ -453,15 +453,15 @@ function agileissues_theme($existing, $type, $theme, $path) {
   return array(
     'agileissues_changelog_entry' => array(
       'render element' => 'change',
-      'template' => 'agile-changelog-entry',
+      'template' => 'agileissues-changelog-entry',
     ),
     'agileissues_metrics_form' => array(
       'render element' => 'form',
-      'template' => 'agile-metrics-form',
+      'template' => 'agileissues-metrics-form',
     ),
     'agileissues_note_list' => array(
       'render element' => 'list',
-      'template' => 'agile-note-list',
+      'template' => 'agileissues-note-list',
     ),
     'agileissues_bar' => array(
       'variables' => array(
@@ -475,47 +475,47 @@ function agileissues_theme($existing, $type, $theme, $path) {
     ),
     'agileissues_story_list' => array(
       'render element' => 'list',
-      'template' => 'agile-story-list',
+      'template' => 'agileissues-story-list',
     ),
     'agileissues_task_list' => array(
       'render element' => 'list',
-      'template' => 'agile-task-list',
+      'template' => 'agileissues-task-list',
     ),
     'agileissues_frontend' => array(
       'render element' => 'frontend',
-      'template' => 'agile-frontend',
+      'template' => 'agileissues-frontend',
     ),
     'agileissues_project_backlog_short' => array(
       'render element' => 'elements',
-      'template' => 'agile-project-backlog-short',
+      'template' => 'agileissues-project-backlog-short',
     ),
     'agileissues_project_sprint_short' => array(
       'render element' => 'elements',
-      'template' => 'agile-project-sprint-short',
+      'template' => 'agileissues-project-sprint-short',
     ),
     'agileissues_story_form' => array(
       'render element' => 'form',
-      'template' => 'agile-story-form',
+      'template' => 'agileissues-story-form',
     ),
     'agileissues_manage_stories_form' => array(
       'render element' => 'form',
-      'template' => 'agile-manage-stories-form',
+      'template' => 'agileissues-manage-stories-form',
     ),
     'agileissues_manage_tasks_form' => array(
       'render element' => 'form',
-      'template' => 'agile-manage-tasks-form',
+      'template' => 'agileissues-manage-tasks-form',
     ),
     'agileissues_metrics_form' => array(
       'render element' => 'form',
-      'template' => 'agile-metrics-form',
+      'template' => 'agileissues-metrics-form',
     ),
     'agileissues_search_form' => array(
       'render element' => 'form',
-      'template' => 'agile-search',
+      'template' => 'agileissues-search',
     ),
     'agileissues_search_results' => array(
       'render element' => 'results',
-      'template' => 'agile-search-results',
+      'template' => 'agileissues-search-results',
     ),
   );
 }
