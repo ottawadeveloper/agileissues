@@ -268,7 +268,6 @@ function agileissues_story_form($form, &$form_state, $story = NULL, $project = N
     $form['change_notes'] = array(
       '#type' => 'textarea',
       '#title' => t('Change note'),
-      '#required' => TRUE,
       '#weight' => 9999,
     );
   }
