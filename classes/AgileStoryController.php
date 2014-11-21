@@ -33,7 +33,9 @@ class AgileStoryController extends EntityApiController {
               ->fields('ait', array('id'))
               ->execute()
               ->fetchAllKeyed(0, 0);
-      entity_get_controller('agile_task')->delete($tasks, $transaction);
+      if (!empty($tasks)) {
+        entity_get_controller('agile_task')->delete($tasks, $transaction);
+      }
       parent::delete($ids, $transaction);
     }
     catch (Exception $ex) {

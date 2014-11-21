@@ -1012,13 +1012,12 @@ function agileissues_story_delete_form($form, &$form_state, $story) {
     '#type' => 'value',
     '#value' => $story,
   );
-  $form = confirm_form($form, t('Are you sure you want to delete this story?'));
-  return $form;
+  return confirm_form($form, t('Are you sure you want to delete this story?'), '');
 }
 
 function agileissues_story_delete_form_submit($form, &$form_state) {
   $controller = entity_get_controller('agile_story');
-  if ($controller->delete($form_state['values']['entity']->id)) {
+  if ($controller->delete(array($form_state['values']['entity']->id))) {
     ctools_include('ajax');
     drupal_set_message(t('Story deleted successfully.'));
     $form_state['ajax_commands'][] = ctools_ajax_command_reload();
