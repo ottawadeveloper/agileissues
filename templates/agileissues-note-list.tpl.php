@@ -1,7 +1,7 @@
 <?php 
 
 echo '<div class="agile-note-list">';
-if (empty($list['#ids'])) {
+if (empty($list['#children'])) {
   echo '<p>There are no notes to be shown.</p>';
 }
 else {
