@@ -42,6 +42,7 @@ function agileissues_agile_relationships() {
 }
 
 function agileissues_register_changelog($etype, $eid, $property, $old, $new) {
+  global $user;
   $change = array(
     'entity_type' => $etype,
     'entity_id' => $eid,
@@ -49,6 +50,7 @@ function agileissues_register_changelog($etype, $eid, $property, $old, $new) {
     'old_value' => $old,
     'new_value' => $new,
     'created' => time(),
+    'uid' => $user,
   );
   db_insert('agileissues_changelog')->fields($change)->execute();
 }
@@ -456,6 +458,7 @@ function agileissues_render_notes($type, $object, $view_mode) {
       '#old' => $changenote->old_value,
       '#new' => $changenote->new_value,
       '#agile_date' => $changenote->created,
+      '#user' => $changenote->uid,
     );
     if (!empty($processor['display callback'])) {
       $row['#old'] = $processor['display callback']($row['#old']);

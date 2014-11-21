@@ -1,7 +1,9 @@
 <?php
 
 echo '<div class="agile-changenote">';
-echo '<span class="agile-changenote-label">' . $change['#label'] . '</span>';
-echo '<span class="agile-changenote-old">' . $change['#old'] . '</span>';
-echo '<span class="agile-changenote-new">' . $change['#new'] . '</span>';
+$user = user_load($change['#uid']);
+echo '<span class="agile-changenote-person">' . $user->name . '</span> changed ';
+echo '<span class="agile-changenote-label">' . $change['#label'] . '</span> from ';
+echo '<span class="agile-changenote-old">[' . $change['#old'] . ']</span> to';
+echo '<span class="agile-changenote-new">[' . $change['#new'] . ']</span>';
 echo '</div>';
