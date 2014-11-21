@@ -41,9 +41,10 @@ function agileissues_agile_relationships() {
   );
 }
 
-function agileissues_register_changelog($note, $property, $old, $new) {
+function agileissues_register_changelog($etype, $eid, $property, $old, $new) {
   $change = array(
-    'note_id' => $note->id,
+    'entity_type' => $etype,
+    'entity_id' => $eid,
     'property_key' => $property,
     'old_value' => $old,
     'new_value' => $new,
@@ -75,9 +76,9 @@ function agileissues_get_changes($note) {
   return $display;
 }
 
-function agileissues_save_changelog($note, $changes) {
+function agileissues_save_changelog($entity_type, $entity_id, $changes) {
   foreach ($changes as $change) {
-    agileissues_register_changelog($note, $change['property'], $change['old'], $change['new']);
+    agileissues_register_changelog($entity_type, $entity_id, $change['property'], $change['old'], $change['new']);
   }
 }
 
@@ -113,6 +114,12 @@ function agileissues_get_changelog_processors($type = 'story') {
 function agileissues_agile_changelog_processors($type) {
   $processors = array();
   switch ($type) {
+    case 'story':
+      $processors['backlog'] = array(
+        'display' => t('Backlog'),
+        'index' => 'backlog_id',
+        'display callback' => '_agileissues_backlog_name',
+      );
     case 'task':
       $processors['task-status'] = array(
         'display' => t('Task Status'),
@@ -122,6 +129,11 @@ function agileissues_agile_changelog_processors($type) {
       break;
   }
   return $processors;
+}
+
+function _agileissues_backlog_name($backlog_id) {
+  $backlog = agileissues_backlog_load($backlog_id);
+  return t($backlog->name);
 }
 
 function _agileissues_task_status_name($code) {

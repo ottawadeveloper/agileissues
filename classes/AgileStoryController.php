@@ -13,6 +13,11 @@ class AgileStoryController extends EntityApiController {
     }
     module_load_include('inc', 'agileissues');
     $entity->priority_score = agileissues_get_story_priority_score($entity);
+    if (!empty($entity->id)) {
+      $old = agileissues_story_load($entity->id);
+      $changes = agileissues_process_changelog($old, $entity, 'story');
+      agileissues_save_changelog('story', $entity->id, $changes);
+    }
     return parent::save($entity, $transaction);
   }
   
