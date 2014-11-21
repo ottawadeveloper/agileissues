@@ -604,6 +604,7 @@ function agileissues_manage_stories_form_submit($form, &$form_state) {
 }
 
 function agileissues_task_form($form, &$form_state, $task = NULL, $story = NULL) {
+  $form['#theme'] = 'agileissues_task_form';
   if (empty($task)) {
     $story_id = 0;
     if (!empty($story)) {

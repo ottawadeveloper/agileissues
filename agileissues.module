@@ -487,6 +487,11 @@ function agileissues_theme($existing, $type, $theme, $path) {
       'template' => 'agileissues-changelog-entry',
       'path' => $path,
     ),
+    'agileissues_task_form' => array(
+      'render element' => 'form',
+      'template' => 'agileissues-task-form',
+      'path' => $path,
+    ),
     'agileissues_metrics_form' => array(
       'render element' => 'form',
       'template' => 'agileissues-metrics-form',
