@@ -37,6 +37,7 @@ class AgileStoryController extends EntityApiController {
         entity_get_controller('agile_task')->delete($tasks, $transaction);
       }
       parent::delete($ids, $transaction);
+      return TRUE;
     }
     catch (Exception $ex) {
       if ($rollback) {

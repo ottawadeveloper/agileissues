@@ -1017,15 +1017,10 @@ function agileissues_story_delete_form($form, &$form_state, $story) {
 
 function agileissues_story_delete_form_submit($form, &$form_state) {
   $controller = entity_get_controller('agile_story');
-  if ($controller->delete(array($form_state['values']['entity']->id))) {
-    ctools_include('ajax');
-    drupal_set_message(t('Story deleted successfully.'));
-    $form_state['ajax_commands'][] = ctools_ajax_command_reload();
-  }
-  else {
-    drupal_set_message(t('An error occurred while deleting the story.'), 'error');
-    $form_state['rebuild'] = TRUE;
-  }
+  $controller->delete(array($form_state['values']['entity']->id));
+  ctools_include('ajax');
+  drupal_set_message(t('Story deleted successfully.'));
+  $form_state['ajax_commands'][] = ctools_ajax_command_reload();
 }
 
 function agileissues_task_delete_form($form, &$form_state, $task) {
