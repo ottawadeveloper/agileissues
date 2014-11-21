@@ -466,7 +466,7 @@ function agileissues_render_notes($type, $object, $view_mode) {
     }
     $children[] = $row;
   }
-  asort($children, '_agileissues_sort_note_list');
+  uasort($children, '_agileissues_sort_note_list');
   $render = array(
     '#theme' => 'agileissues_note_list',
     '#children' => $children,
