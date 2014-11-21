@@ -7,7 +7,7 @@ if (empty($list['#children'])) {
 else {
   echo '<ul>';
   foreach ($list['#children'] as $child) {
-    echo render($child);
+    echo '<li>' . render($child) . '</li>';
   }
   echo '</ul>';
 }
