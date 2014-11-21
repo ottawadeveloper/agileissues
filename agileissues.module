@@ -447,7 +447,7 @@ function agileissues_render_notes($type, $object, $view_mode) {
     ->condition('entity_id', $object->id)
     ->orderBy('created', 'DESC')
     ->execute();
-  $processors = agileissues_get_changelog_processors($note->entity_type);
+  $processors = agileissues_get_changelog_processors($type);
   foreach ($changenotes as $changenote) {
     $processor = $processors[$changenote->property_key];
     $row = array(
