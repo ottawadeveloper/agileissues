@@ -48,32 +48,9 @@ function agileissues_register_changelog($etype, $eid, $property, $old, $new) {
     'property_key' => $property,
     'old_value' => $old,
     'new_value' => $new,
+    'created' => time(),
   );
   db_insert('agileissues_changelog')->fields($change)->execute();
-}
-
-function agileissues_get_changes($note) {
-  $changes = db_select('agileissues_changelog', 'acl')
-    ->fields('acl')
-    ->condition('note_id', $note->id)
-    ->execute()->fetchAll();
-  $display = array();
-  $processors = agileissues_get_changelog_processors($note->entity_type);
-  foreach ($changes as $change) {
-    $processor = $processors[$change->property_key];
-    $disp = array(
-      '#theme' => 'agileissues_changelog_entry',
-      '#label' => $processor['display'],
-      '#old' => $change->old_value,
-      '#new' => $change->new_value,
-    );
-    if (!empty($processor['display callback'])) {
-      $disp['#old'] = $processor['display callback']($disp['#old']);
-      $disp['#new'] = $processor['display callback']($disp['#new']);
-    }
-    $display[] = $disp;
-  }
-  return $display;
 }
 
 function agileissues_save_changelog($entity_type, $entity_id, $changes) {
@@ -120,6 +97,7 @@ function agileissues_agile_changelog_processors($type) {
         'index' => 'backlog_id',
         'display callback' => '_agileissues_backlog_name',
       );
+      break;
     case 'task':
       $processors['task-status'] = array(
         'display' => t('Task Status'),
@@ -454,12 +432,47 @@ function agileissues_render_notes($type, $object, $view_mode) {
     ->orderBy('created', 'DESC')
     ->fields('ain', array('id'))
     ->execute()->fetchAllKeyed(0, 0);
+  $children = array();
+  foreach ($ids as $id) {
+    $entities = agileissues_note_load_multiple(array($id));
+    $entity = reset($entities);
+    $view = entity_view('agile_note', $entities, 'full');
+    $children[] = reset($view) + array(
+      '#agile_date' => $entity->created,
+    );
+  }
+  $changenotes = db_select('agileissues_changelog', 'acl')
+    ->fields('acl')
+    ->condition('entity_type', $type)
+    ->condition('entity_id', $object->id)
+    ->orderBy('created', 'DESC')
+    ->execute();
+  $processors = agileissues_get_changelog_processors($note->entity_type);
+  foreach ($changenotes as $changenote) {
+    $processor = $processors[$changenote->property_key];
+    $row = array(
+      '#theme' => 'agileissues_changelog_entry',
+      '#label' => $processor['display'],
+      '#old' => $changenote->old_value,
+      '#new' => $changenote->new_value,
+      '#agile_date' => $changenote->created,
+    );
+    if (!empty($processor['display callback'])) {
+      $row['#old'] = $processor['display callback']($row['#old']);
+      $row['#new'] = $processor['display callback']($row['#new']);
+    }
+    $children[] = $row;
+  }
   $render = array(
     '#theme' => 'agileissues_note_list',
-    '#ids' => $ids,
+    '#children' => $children,
     '#view_mode' => $view_mode,
   );
   print render($render);
+}
+
+function _agileissues_sort_note_list($a, $b) {
+  return $b['#agile_date'] - $a['#agile_date'];
 }
 
 function agileissues_theme($existing, $type, $theme, $path) {

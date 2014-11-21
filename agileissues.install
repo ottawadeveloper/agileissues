@@ -41,6 +41,18 @@ function agileissues_update_7100() {
 }
 
 /**
+ * Added a created field.
+ */
+function agileissues_update_7101() {
+  db_add_field('agileissues_changelog', 'created', array(
+    'type' => 'int',
+    'size' => 'normal',
+    'unsigned' => TRUE,
+    'not null' => TRUE,
+  ));
+}
+
+/**
  * Table definition for agileissues_relationships
  */
 function _agileissues_schema_relationships() {
@@ -105,6 +117,12 @@ function _agileissues_schema_changelog() {
         'unsigned' => TRUE,
         'not null' => TRUE,
         'size' => 'normal',
+      ),
+      'created' => array(
+        'type' => 'int',
+        'size' => 'normal',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
       ),
       'entity_type' => array(
         'type' => 'varchar',
