@@ -439,6 +439,7 @@ function agileissues_render_notes($type, $object, $view_mode) {
   $ids = db_select('agileissues_notes', 'ain')
     ->condition('entity_type', $type)
     ->condition('entity_id', $object->id)
+    ->orderBy('created_date', 'DESC')
     ->fields('ain', array('id'))
     ->execute()->fetchAllKeyed(0, 0);
   $render = array(
