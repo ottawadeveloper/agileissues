@@ -283,7 +283,7 @@ function _agileissues_sprint_name($sprint_id) {
   return t($sprint->name);
 }
 
-function _agileissues_register_changelog($etype, $eid, $property, $old, $new) {
+function _agileissues_register_change($etype, $eid, $property, $old, $new) {
   global $user;
   $change = array(
     'entity_type' => $etype,
