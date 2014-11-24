@@ -1,5 +1,85 @@
 <?php
 
+function agileissues_construct_changelog_processor($display, $index, $index_display_callback, $include = 'internal.inc', $dynamic = FALSE) {
+  $index_key = 'index';
+  if ($dynamic) {
+    $index_key = 'index callback';
+  }
+  return array(
+    'display' => $display,
+    $index_key => $index,
+    'display callback' => $index_display_callback,
+    'include' => $include,
+  );
+}
+
+function agileissues_construct_relationship_definition($left, $right, $leftTypes = NULL, $rightTypes = NULL) {
+  if (empty($leftTypes)) {
+    $leftTypes = array('story', 'task');
+  }
+  elseif (!is_array($leftTypes)) {
+    $leftTypes = array($leftTypes);
+  }
+  if (empty($rightTypes)) {
+    $rightTypes = $leftTypes;
+  }
+  elseif (!is_array($rightTypes)) {
+    $rightTypes = array($rightTypes);
+  }
+  return array(
+    'left_display' => $left,
+    'right_display' => $right,
+    'left_types' => $leftTypes,
+    'right_types' => $rightTypes,
+  );
+}
+
+function agileissues_construct_search_option($table, $index, $value, $search_type = NULL, $data_type = NULL, $index_type = 'property', $strict = TRUE) {
+  if (empty($search_type)) {
+    if ($table === 'task' || $table === 'sprint') {
+      $search_type = array('task');
+    }
+    else {
+      $search_type = array('task', 'story');
+    }
+  }
+  elseif (!is_array($search_type)) {
+    $search_type = array($search_type);
+  }
+  return array(
+    'object' => $table,
+    'applies_to' => $search_type,
+    'property' => $index,
+    'value' => $value,
+    'type' => $index_type,
+    'strict' => $strict,
+    'data_type' => $data_type,
+  );
+}
+
+function agileissues_construct_search_parameter($table, $index, $filter_function, $search_type = NULL, $data_type = NULL, $index_type = 'property', $strict = TRUE) {
+  if (empty($search_type)) {
+    if ($table === 'task') {
+      $search_type = array('task');
+    }
+    else {
+      $search_type = array('task', 'story');
+    }
+  }
+  elseif (!is_array($search_type)) {
+    $search_type = array($search_type);
+  }
+  return array(
+    'object' => $table,
+    'applies_to' => $search_type,
+    'property' => $index,
+    'sanitize' => $filter_function,
+    'type' => $index_type,
+    'strict' => $strict,
+    'data_type' => $data_type,
+  );
+}
+
 function agileissues_get_story_priority_score($story) {
   $scores = module_invoke_all('agile_story_priority', $story);
   return agileissues_calculate_geometric_mean($scores);
@@ -159,4 +239,48 @@ function agileissues_calculate_mean($set) {
     return 0;
   }
   return array_sum($set) / $l;
+}
+
+function agileissues_load_relationships($object, $type) {
+  $rels = array();
+  $left_rels = db_select('agileissues_relationships', 'air')
+    ->fields('air')
+    ->condition('left_entity_id', $object->id)
+    ->condition('left_entity_type', $type)
+    ->execute()->fetchAll();
+  foreach ($left_rels as $rel) {
+    $typeKey = 'l|' . $rel->relationship_type;
+    if (!isset($rels[$typeKey])) {
+      $rels[$typeKey] = array(
+        'type' => $typeKey,
+        'objects' => array(),
+      );
+    }
+    $obj_id = $rel->right_entity_type . '|' . $rel->right_entity_id;
+    $rels[$typeKey]['objects'][$obj_id] = $obj_id;
+  }
+  $right_rels = db_select('agileissues_relationships', 'air')
+    ->fields('air')
+    ->condition('right_entity_id', $object->id)
+    ->condition('right_entity_type', $type)
+    ->execute()->fetchAll();
+  foreach ($right_rels as $rel) {
+    $typeKey = 'r|' . $rel->relationship_type;
+    if (!isset($rels[$typeKey])) {
+      $rels[$typeKey] = array(
+        'type' => $typeKey,
+        'objects' => array(),
+      );
+    }
+    $obj_id = $rel->left_entity_type . '|' . $rel->left_entity_id;
+    $rels[$typeKey]['objects'][$obj_id] = $obj_id;
+  }
+  $actual = array();
+  foreach ($rels as $set) {
+    $actual[] = array(
+      'type' => $set['type'],
+      'object' => implode(',', $set['objects']),
+    );
+  }
+  return $actual;
 }

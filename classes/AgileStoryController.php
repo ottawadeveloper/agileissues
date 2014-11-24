@@ -13,12 +13,15 @@ class AgileStoryController extends EntityApiController {
     }
     module_load_include('inc', 'agileissues');
     $entity->priority_score = agileissues_get_story_priority_score($entity);
+    $old = NULL;
     if (!empty($entity->id)) {
       $old = agileissues_story_load($entity->id);
-      $changes = agileissues_process_changelog($old, $entity, 'story');
-      agileissues_save_changelog('story', $entity->id, $changes);
     }
-    return parent::save($entity, $transaction);
+    parent::save($entity, $transaction);
+    if (!empty($old)) {
+      module_load_include('internal.inc', 'agileissues');
+      _agileissues_register_all_changes('story', $old, $entity);
+    }
   }
   
   public function delete($ids, DatabaseTransaction $transaction = NULL) {

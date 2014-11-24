@@ -134,6 +134,8 @@ function agileissues_story_form($form, &$form_state, $story = NULL, $project = N
       'primary_uid' => 0,
       'story_points' => 0,
       'reporting_uid' => $user->uid,
+      'status' => 'A',
+      'sprint_id' => 0,
     );
   }
   if (empty($story->type)) {
@@ -172,6 +174,14 @@ function agileissues_story_form($form, &$form_state, $story = NULL, $project = N
       $users[$u->uid] = $u->name;
     }
   }
+  $sprints = array();
+  if (!empty($story->project_id)) {
+    $sprints = db_select('agileissues_sprints', 'ais')
+      ->fields('ais', array('id', 'name'))
+      ->orderBy('start_date')
+      ->condition('project_id', $story->project_id)
+      ->execute()->fetchAllKeyed(0, 1);
+  }
   $form += array(
     'backlog_id' => array(
       '#type' => 'select',
@@ -200,9 +210,39 @@ function agileissues_story_form($form, &$form_state, $story = NULL, $project = N
       '#empty_option' => t('(unassigned)'),
       '#weight' => -50,
     ),
+    'status' => array(
+      '#type' => 'select',
+      '#title' => t('Status'),
+      '#options' => array(
+        'A' => t('Active'),
+        'C' => t('Complete'),
+      ),
+      '#required' => TRUE,
+      '#default_value' => $story->status,
+    ),
+    'sprint_id' => array(
+      '#type' => 'select',
+      '#title' => t('Released'),
+      '#required' => FALSE,
+      '#empty_option' => t('Not yet released'),
+      '#empty_value' => 0,
+      '#default_value' => $story->sprint_id,
+      '#options' => $sprints,
+    ),
     'story_points' => array(
-      '#type' => 'textfield',
+      '#type' => 'select',
       '#title' => t('Story Points'),
+      '#options' => array(
+        1 => t('Tiny'),
+        2 => t('Small'),
+        4 => t('Medium'),
+        6 => t('Large'),
+        10 => t('Huge'),
+        25 => t('Colossal'),
+        100 => t('Manhatten'),
+      ),
+      '#empty_value' => 0,
+      '#empty_option' => t('Unknown'),
       '#default_value' => $story->story_points,
       '#size' => 5,
       '#weight' => -25,
@@ -223,6 +263,7 @@ function agileissues_story_form($form, &$form_state, $story = NULL, $project = N
     '#collapsed' => TRUE,
     '#weight' => 100,
   );
+  module_load_include('inc', 'agileissues');
   $existing = array();
   if (!empty($story->id)) {
     $existing = agileissues_load_relationships($story, 'story');
@@ -231,7 +272,7 @@ function agileissues_story_form($form, &$form_state, $story = NULL, $project = N
     $form_state['num_rels'] = count($existing) + 1;
   }
   $relationship_types = array();
-  foreach (agileissues_get_relationship_types() as $key => $type) {
+  foreach (agileissues_relationships() as $key => $type) {
     $relationship_types['l|' . $key] = $type['left_display'];
     $relationship_types['r|' . $key] = $type['right_display'];
   }
@@ -286,7 +327,7 @@ function agileissues_story_form_validate($form, &$form_state) {
 }
 
 function agileissues_story_build_from_form($form_state) {
-  $properties = array('id', 'created', 'title', 'backlog_id', 'project_id', 'type', 'weight', 'reporting_uid', 'primary_uid', 'story_points');
+  $properties = array('id', 'created', 'title', 'backlog_id', 'project_id', 'type', 'weight', 'reporting_uid', 'primary_uid', 'story_points', 'status', 'sprint_id');
   $stub_values = array();
   foreach ($properties as $key) {
     $stub_values[$key] = $form_state['values'][$key];
@@ -294,32 +335,8 @@ function agileissues_story_build_from_form($form_state) {
   return (object) $stub_values;
 }
 
-function agileissues_save_relationships($object, $obj_type, $relationship_type, $relationship_input) {
-  $relationships = explode(",", $relationship_input);
-  list($direction, $type) = explode('|', $relationship_type, 2);
-  foreach ($relationships as $relationship) {
-    list($other_type, $other_id) = explode('|', $relationship, 2);
-    if ($direction === 'l') {
-      agileissues_define_relationship($obj_type, $object->id, $other_type, $other_id, $type);
-    }
-    else {
-      agileissues_define_relationship($other_type, $other_id, $obj_type, $object->id, $type);
-    }
-  }
-}
-
-function agileissues_clear_relationships($object, $type) {
-  db_delete('agileissues_relationships')
-    ->condition('left_entity_id', $object->id)
-    ->condition('left_entity_type', $type)
-    ->execute();
-  db_delete('agileissues_relationships')
-    ->condition('right_entity_id', $object->id)
-    ->condition('right_entity_type', $type)
-    ->execute();
-}
-
 function agileissues_save_all_relationships($object, $type, &$form_state) {
+  module_load_include('internal.inc', 'agileissues');
   agileissues_clear_relationships($object, $type);
   foreach ($form_state['values']['relationships'] as $relationship) {
     if (!empty($relationship['type']) && !empty($relationship['object'])) {
@@ -328,49 +345,6 @@ function agileissues_save_all_relationships($object, $type, &$form_state) {
   }
 }
 
-function agileissues_load_relationships($object, $type) {
-  $rels = array();
-  $left_rels = db_select('agileissues_relationships', 'air')
-    ->fields('air')
-    ->condition('left_entity_id', $object->id)
-    ->condition('left_entity_type', $type)
-    ->execute()->fetchAll();
-  foreach ($left_rels as $rel) {
-    $typeKey = 'l|' . $rel->relationship_type;
-    if (!isset($rels[$typeKey])) {
-      $rels[$typeKey] = array(
-        'type' => $typeKey,
-        'objects' => array(),
-      );
-    }
-    $obj_id = $rel->right_entity_type . '|' . $rel->right_entity_id;
-    $rels[$typeKey]['objects'][$obj_id] = $obj_id;
-  }
-  $right_rels = db_select('agileissues_relationships', 'air')
-    ->fields('air')
-    ->condition('right_entity_id', $object->id)
-    ->condition('right_entity_type', $type)
-    ->execute()->fetchAll();
-  foreach ($right_rels as $rel) {
-    $typeKey = 'r|' . $rel->relationship_type;
-    if (!isset($rels[$typeKey])) {
-      $rels[$typeKey] = array(
-        'type' => $typeKey,
-        'objects' => array(),
-      );
-    }
-    $obj_id = $rel->left_entity_type . '|' . $rel->left_entity_id;
-    $rels[$typeKey]['objects'][$obj_id] = $obj_id;
-  }
-  $actual = array();
-  foreach ($rels as $set) {
-    $actual[] = array(
-      'type' => $set['type'],
-      'object' => implode(',', $set['objects']),
-    );
-  }
-  return $actual;
-}
 
 function agileissues_story_form_submit($form, &$form_state) {
   global $user;
@@ -407,34 +381,6 @@ function agileissues_story_form_submit($form, &$form_state) {
   }
 }
 
-function agileissues_ajax_reassign_story_backlog($story, $backlog) {
-  return db_update('agileissues_stories')
-    ->condition('id', $story->id)
-    ->fields(array('backlog_id' => $backlog->id))
-    ->execute() !== FALSE;
-}
-
-function agileissues_ajax_reassign_task_sprint($task, $backlog) {
-  return db_update('agileissues_tasks')
-    ->condition('id', $task->id)
-    ->fields(array('backlog_id' => $backlog->id))
-    ->execute() !== FALSE;
-}
-
-function agileissues_ajax_complete_task($task) {
-  return db_update('agileissues_tasks')
-    ->condition('id', $task->id)
-    ->fields(array('status' => 'C'))
-    ->execute() !== FALSE;
-}
-
-function agileissues_ajax_modify_backlog_status($backlog, $new_status) {
-  return db_update('agileissues_backlog')
-    ->condition('id', $backlog->id)
-    ->fields(array('status' => $new_status))
-    ->execute() !== FALSE;
-}
-
 function agileissues_story_move_form($form, &$form_state, $story) {
   $backlogs = array();
   foreach (agileissues_backlog_load_all() as $backlog) {
@@ -452,6 +398,11 @@ function agileissues_story_move_form($form, &$form_state, $story) {
     '#empty_value' => 0,
     '#empty_option' => t('(unassigned)'),
   );
+  $form['change_notes'] = array(
+    '#type' => 'textarea',
+    '#title' => t('Change note'),
+    '#weight' => 9999,
+  );
   $form['save'] = array(
     '#type' => 'submit',
     '#value' => t('Move Story'),
@@ -460,8 +411,23 @@ function agileissues_story_move_form($form, &$form_state, $story) {
 }
 
 function agileissues_story_move_form_submit($form, &$form_state) {
-  $backlog = agileissues_backlog_load($form_state['values']['backlog_id']);
-  if (agileissues_ajax_reassign_story_backlog($form_state['values']['story'], $backlog)) {
+  global $user;
+  $story = $form_state['values']['story'];
+  $story->backlog_id = $form_state['values']['backlog_id'];
+  if (agileissues_story_save($story)) { 
+    if (!empty($form_state['values']['change_notes'])) {
+      $note = (object) array(
+        'entity_type' => 'story',
+        'entity_id' => $story->id,
+        'note_text' => $form_state['values']['change_notes'],
+        'title' => 'Change note',
+        'created' => time(),
+        'updated' => time(),
+        'uid' => $user->uid,
+        'time_spent' => 0,
+      );
+      agileissues_save_note($note);
+    }
     ctools_include('ajax');
     drupal_set_message(t('The story has been reassigned.'));
     $form_state['ajax_commands'][] = ctools_ajax_command_reload();
@@ -501,6 +467,23 @@ function agileissues_note_form($form, &$form_state, $type, $object) {
     '#title' => t('Mark this task as completed.'),
     '#access' => $type === 'task',
   );
+  if ($type === 'task') {
+    $form['close_story'] = array(
+      '#type' => 'checkbox',
+      '#title' => t('Mark the story as completed.'),
+      '#states' => array(
+        'visible' => array(
+          ':input[name="complete_task"]' => array('checked' => TRUE),
+        ),
+      ),
+    );
+  }
+  else {
+    $form['close_story'] = array(
+      '#type' => 'checkbox',
+      '#title' => t('Mark this story as completed.'),
+    );
+  }
   $form['create'] = array(
     '#value' => t('Create Note'),
     '#type' => 'submit',
@@ -516,7 +499,7 @@ function agileissues_note_form_validate($form, &$form_state) {
 
 function agileissues_note_form_submit($form, &$form_state) {
   global $user;
-  $fields = array('entity_type', 'entity_id', 'title', 'note_text');
+  $fields = array('entity_type', 'entity_id', 'title', 'note_text', 'time_spent');
   $stub = array(
     'created' => time(),
     'updated' => time(),
@@ -529,11 +512,22 @@ function agileissues_note_form_submit($form, &$form_state) {
   $note = (object) $stub;
   if (agileissues_save_note($note)) {
     drupal_set_message(t('Note has been saved.'));
-    if (!empty($form_state['values']['complete_task'])) {
-      db_update('agileissues_tasks')
-        ->condition('id', $form_state['values']['entity_id'])
-        ->fields(array('status' => 'C'))
-        ->execute();
+    if ($note->entity_type === 'task') {
+      if (!empty($form_state['values']['complete_task'])) {
+        $task = agileissues_task_load($note->entity_id);
+        $task->status = 'C';
+        agileissues_save_task($task);
+        if (!empty($form_state['values']['close_story'])) {
+          $story = agileissues_story_load($task->story_id);
+          $story->status = 'C';
+          agileissues_save_story($story);
+        }
+      }
+    }
+    elseif (!empty($form_state['values']['close_story'])) {
+      $story = agileissues_story_load($note->entity_id);
+      $story->status = 'C';
+      agileissues_save_story($story);
     }
     ctools_include('ajax');
     $form_state['ajax_commands'][] = ctools_ajax_command_reload();
@@ -604,6 +598,7 @@ function agileissues_manage_stories_form_submit($form, &$form_state) {
 }
 
 function agileissues_task_form($form, &$form_state, $task = NULL, $story = NULL) {
+  global $user;
   $form['#theme'] = 'agileissues_task_form';
   if (empty($task)) {
     $story_id = 0;
@@ -621,8 +616,10 @@ function agileissues_task_form($form, &$form_state, $task = NULL, $story = NULL)
       'weight' => 99999,
       'uid' => 0,
       'estimated_time' => 0,
+      'creator' => $user->uid,
       'status' => 'O',
       'created' => 0,
+      'id' => 0,
     );
   }
   if (empty($task->type)) {
@@ -647,6 +644,10 @@ function agileissues_task_form($form, &$form_state, $task = NULL, $story = NULL)
   $form['id'] = array(
     '#type' => 'value',
     '#value' => $task->id,
+  );
+  $form['creator'] = array(
+    '#type' => 'value',
+    '#value' => $task->creator,
   );
   $form['weight'] = array(
     '#type' => 'value',
@@ -748,7 +749,7 @@ function agileissues_task_form($form, &$form_state, $task = NULL, $story = NULL)
 
 function agileissues_task_form_submit($form, &$form_state) {
   global $user;
-  $keys = array('title', 'id', 'weight', 'uid', 'created', 'type', 'story_id', 'sprint_id', 'uid', 'estimated_time', 'status');
+  $keys = array('title', 'id', 'weight', 'uid', 'created', 'type', 'story_id', 'sprint_id', 'uid', 'estimated_time', 'status', 'creator');
   $stub = array();
   foreach ($keys as $key) {
     $stub[$key] = $form_state['values'][$key];

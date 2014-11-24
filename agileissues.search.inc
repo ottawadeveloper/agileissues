@@ -1,155 +1,5 @@
 <?php
 
-function _agileissues_search_flags($for = 'story') {
-  global $user;
-  return array(
-    '@mine' => array(
-      'object' => $for,
-      'applies_to' => array($for),
-      'property' => 'id',
-      'value' => $user->uid,
-      'type' => 'property',
-      'strict' => TRUE,
-    ),
-    '@mytasks' => array(
-      'object' => 'task',
-      'applies_to' => array('task'),
-      'property' => 'uid',
-      'value' => $user->uid,
-      'type' => 'property',
-      'strict' => TRUE,
-    ),
-    '@unassigned' => array(
-      'object' => 'task',
-      'applies_to' => array('task'),
-      'property' => 'uid',
-      'value' => 0,
-      'strict' => TRUE,
-      'type' => 'property',
-    ),
-    '@unowned' => array(
-      'object' => 'story',
-      'applies_to' => array('story'),
-      'property' => 'primary_uid',
-      'value' => 0,
-      'strict' => TRUE,
-      'type' => 'property',
-    ),
-    '@noproject' => array(
-      'object' => 'story',
-      'applies_to' => array('task', 'story'),
-      'property' => 'project_id',
-      'value' => 0,
-      'strict' => TRUE,
-      'type' => 'property',
-    ),
-    '@unscheduled' => array(
-      'object' => 'task',
-      'applies_to' => array('task'),
-      'property' => 'sprint_id',
-      'value' => 0,
-      'strict' => TRUE,
-      'type' => 'property',
-    ),
-    '@nobacklog' => array(
-      'object' => 'story',
-      'applies_to' => array('task', 'story'),
-      'property' => 'backlog_id',
-      'value' => 0,
-      'strict' => TRUE,
-      'type' => 'property',
-    ),
-    '@nostory' => array(
-      'object' => 'task',
-      'applies_to' => array('task'),
-      'property' => 'story_id',
-      'value' => 0,
-      'strict' => TRUE,
-      'type' => 'property',
-    ),
-    '@mystories' => array(
-      'object' => 'story',
-      'applies_to' => array('story', 'task'),
-      'property' => 'reporting_uid',
-      'value' => $user->uid,
-      'type' => 'property',
-      'strict' => TRUE,
-    ),
-    '@assignedstories' => array(
-      'object' => 'story',
-      'applies_to' => array('story', 'task'),
-      'property' => 'primary_uid',
-      'value' => $user->uid,
-      'type' => 'property',
-      'strict' => TRUE,
-    ),
-    '@storyid' => array(
-      'object' => 'story',
-      'property' => 'id',
-      'applies_to' => array('story', 'task'),
-      'sanitize' => FILTER_SANITIZE_NUMBER_INT,
-      'type' => 'property',
-      'strict' => TRUE,
-    ),
-    '@sprintid' => array(
-      'object' => 'sprint',
-      'property' => 'id',
-      'applies_to' => array('task'),
-      'sanitize' => FILTER_SANITIZE_NUMBER_INT,
-      'type' => 'property',
-      'strict' => TRUE,
-    ),
-    '@backlogid' => array(
-      'object' => 'backlog',
-      'property' => 'id',
-      'applies_to' => array('story'),
-      'sanitize' => FILTER_SANITIZE_NUMBER_INT,
-      'type' => 'property',
-      'strict' => TRUE,
-    ),
-    '@projectid' => array(
-      'object' => 'project',
-      'property' => 'id',
-      'applies_to' => array('story', 'task'),
-      'sanitize' => FILTER_SANITIZE_NUMBER_INT,
-      'type' => 'property',
-      'strict' => TRUE,
-    ),
-    '@taskid' => array(
-      'object' => 'task',
-      'property' => 'id',
-      'applies_to' => array('task'),
-      'sanitize' => FILTER_SANITIZE_NUMBER_INT,
-      'type' => 'property',
-      'strict' => TRUE,
-    ),
-    '@closedtasks' => array(
-      'object' => 'task',
-      'property' => 'status',
-      'value' => 'C',
-      'applies_to' => array('task'),
-      'type' => 'property',
-      'strict' => TRUE,
-    ),
-    '@openedtasks' => array(
-      'object' => 'task',
-      'property' => 'status',
-      'value' => 'O',
-      'applies_to' => array('task'),
-      'type' => 'property',
-      'strict' => TRUE,
-    ),
-    '@currentsprint' => array(
-      'object' => 'sprint',
-      'property' => 'status',
-      'status' => 'O',
-      'applies_to' => array('task'),
-      'type' => 'property',
-      'strict' => TRUE,
-    ),
-  );
-}
-
 function agileissues_build_search_parameters($string, array $set = array(), $for = 'story') {
   $params = array(
     'story' => array(
@@ -182,7 +32,7 @@ function agileissues_build_search_parameters($string, array $set = array(), $for
       $sanitized_components[] = $component;
     }
   }
-  $valid_keys = _agileissues_search_flags();
+  $valid_keys = agileissues_search_vectors($for);
   foreach ($sanitized_components as $component) {
     if (substr($component, 0, 1) === '@') {
       $c = explode('=', $component);
@@ -227,10 +77,42 @@ function agileissues_process_search_filter(&$params, $conf, $value) {
     $value = filter_var($value, $conf['sanitize']);
   }
   if (empty($conf['data_type'])) {
-    $conf['data_type'] = 'exact';
+    $conf['data_type'] = AGILE_SEARCH_DATA_TYPE_EXACT;
   }
   switch ($conf['data_type']) {
-    case 'date':
+    case AGILE_SEARCH_DATA_TYPE_GTE:
+      $params[$conf['object']][$conf['property']][] = array(
+        'value' => $value,
+        'op' => '>=',
+        'type' => $conf['type'],
+        'strict' => $conf['strict'],
+      );
+      break;
+    case AGILE_SEARCH_DATA_TYPE_LTE:
+      $params[$conf['object']][$conf['property']][] = array(
+        'value' => $value,
+        'op' => '<=',
+        'type' => $conf['type'],
+        'strict' => $conf['strict'],
+      );
+      break;
+    case AGILE_SEARCH_DATA_TYPE_GT:
+      $params[$conf['object']][$conf['property']][] = array(
+        'value' => $value,
+        'op' => '>',
+        'type' => $conf['type'],
+        'strict' => $conf['strict'],
+      );
+      break;
+    case AGILE_SEARCH_DATA_TYPE_LT:
+      $params[$conf['object']][$conf['property']][] = array(
+        'value' => $value,
+        'op' => '<',
+        'type' => $conf['type'],
+        'strict' => $conf['strict'],
+      );
+      break;
+    case AGILE_SEARCH_DATA_TYPE_DATE:
       $range = _agileissues_smart_strtime($value, 'both');
       $params[$conf['object']][$conf['property']][] = array(
         'value' => $range['end'],
@@ -245,7 +127,7 @@ function agileissues_process_search_filter(&$params, $conf, $value) {
         'strict' => $conf['strict'],
       );
       break;
-    case 'range-end':
+    case AGILE_SEARCH_DATA_TYPE_DATE_RANGE_END:
       $params[$conf['object']][$conf['property']][] = array(
         'value' => _agileissues_smart_strtotime($value, 'end'),
         'op' => '<=',
@@ -253,7 +135,7 @@ function agileissues_process_search_filter(&$params, $conf, $value) {
         'strict' => $conf['strict'],
       );
       break;
-    case 'range-start':
+    case AGILE_SEARCH_DATA_TYPE_DATE_RANGE_START:
       $params[$conf['object']][$conf['property']][] = array(
         'value' => _agileissues_smart_strtotime($value, 'start'),
         'op' => '>=',
@@ -261,7 +143,7 @@ function agileissues_process_search_filter(&$params, $conf, $value) {
         'strict' => $conf['strict'],
       );
       break;
-    case 'like':
+    case AGILE_SEARCH_DATA_TYPE_LIKE:
       $params[$conf['object']][$conf['property']][] = array(
         'value' => '%' . $value . '%',
         'op' => 'LIKE',
@@ -269,7 +151,7 @@ function agileissues_process_search_filter(&$params, $conf, $value) {
         'strict' => $conf['strict'],
       );
       break;
-    case 'exact';
+    case AGILE_SEARCH_DATA_TYPE_EXACT:
     default:
       $params[$conf['object']][$conf['property']][] = array(
         'value' => $value,

@@ -427,6 +427,12 @@ function _agileissues_schema_tasks() {
         'unsigned' => TRUE,
         'not null' => TRUE,
       ),
+      'creator' => array(
+        'type' => 'int',
+        'size' => 'normal',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
       'estimated_time' => array(
         'type' => 'int',
         'size' => 'normal',
@@ -528,6 +534,17 @@ function _agileissues_schema_stories() {
         'not null' => FALSE,
         'default' => 0,
       ),
+      'status' => array(
+        'type' => 'char',
+        'length' => 1,
+        'not null' => TRUE,
+      ),
+      'sprint_id' => array(
+        'type' => 'int',
+        'size' => 'normal',
+        'unsigned' => TRUE,
+        'not null' => FALSE,
+      )
     ),
     'primary key' => array(
       'id',
