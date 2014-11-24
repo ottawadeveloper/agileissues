@@ -22,6 +22,7 @@ class AgileStoryController extends EntityApiController {
       module_load_include('internal.inc', 'agileissues');
       _agileissues_register_all_changes('story', $old, $entity);
     }
+    return TRUE;
   }
   
   public function delete($ids, DatabaseTransaction $transaction = NULL) {

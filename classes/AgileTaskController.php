@@ -23,6 +23,7 @@ class AgileTaskController extends EntityApiController {
       module_load_include('internal.inc', 'agileissues');
       _agileissues_register_all_changes('task', $old, $entity);
     }
+    return TRUE;
   }
   
 }
