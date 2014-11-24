@@ -336,7 +336,7 @@ function agileissues_story_build_from_form($form_state) {
 
 function agileissues_save_all_relationships($object, $type, &$form_state) {
   module_load_include('internal.inc', 'agileissues');
-  agileissues_clear_relationships($object, $type);
+  _agileissues_clear_relationships($object, $type);
   foreach ($form_state['values']['relationships'] as $relationship) {
     if (!empty($relationship['type']) && !empty($relationship['object'])) {
       _agileissues_save_relationships($object, $type, $relationship['type'], $relationship['object']);
