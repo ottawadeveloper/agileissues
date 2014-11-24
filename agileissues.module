@@ -145,6 +145,19 @@ function agileissues_preprocess_entity(&$vars) {
   }
 }
 
+/**
+ * Implements hook_agile_story_priority().
+ */
+function agileissues_agile_story_priority($story) {
+  $scores = array();
+  $weeks = floor((time() - $story->created) / 604800);
+  // stop growing priority after 2 years, because really who cares (also exp()
+  // gets really big).
+  if ($weeks > 104) { $weeks = 104; }
+  $scores[] = exp($weeks / 20);
+  return $scores;
+}
+
 function _agileissues_reload_task_ajax($form) {
   return $form['sprint_id'];
 }

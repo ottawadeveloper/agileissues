@@ -238,7 +238,7 @@ function agileissues_story_form($form, &$form_state, $story = NULL, $project = N
         4 => t('Medium'),
         6 => t('Large'),
         10 => t('Huge'),
-        25 => t('Colossal'),
+        50 => t('Colossal'),
         100 => t('Manhatten'),
       ),
       '#empty_value' => 0,

@@ -143,8 +143,68 @@ function _agileissues_update_priorities() {
   }
 }
 
+function _agileissues_get_field_values($object, $field_property, $field_name, $language) {
+  $values = array();
+  if (!empty($object->{$field_property})) {
+    $fields = $object->{$field_property};
+    if (!empty($fields[$language])) {
+      foreach ($fields[$language] as $dataset) {
+        $values[$language][$dataset[$field_property]] = $dataset[$field_property];
+      }
+    }
+  }
+  ksort($values);
+  return serialize($values);
+}
+
+function _agileissues_alter_field_values(&$old, &$new) {
+  $old = unserialize($old);
+  $new = unserialize($new);
+  $actualOld = array();
+  $actualNew = array();
+  foreach ($old as $o) {
+    if (!isset($new[$o])) {
+      $actualOld[$o] = $o;
+    }
+  }
+  foreach ($new as $n) {
+    if (!isset($old[$n])) {
+      $actualNew[$n] = $n;
+    }
+  }
+  $old = serialize($old);
+  $new = serialize($new);
+}
+
+function _agileissues_display_field_values($values, $display, $field_name) {
+  $values = unserialize($values);
+  $results = array();
+  foreach ($values as $val) {
+    if (empty($display)) {
+      $results[] = $val;
+    }
+    else {
+      $results[] = $display($val, $field_name);
+    }
+  }
+  return implode(', ', $results);
+}
+
+function _agileissues_date_display($date_string) {
+  $time = strtrotime($date_string);
+  return format_date($time, 'custom', 'D, M j, Y H:i');
+}
+
+function _agileissues_taxonomy_term_name($tid) {
+  $term = taxonomy_term_load($tid);
+  return $term->name;
+}
+
 function _agileissues_backlog_name($backlog_id) {
   $backlog = agileissues_backlog_load($backlog_id);
+  if (empty($backlog)) {
+    return t('None');
+  }
   return t($backlog->name);
 }
 
@@ -154,6 +214,73 @@ function _agileissues_task_status_name($code) {
     case 'C': return t('Closed');
   }
   return t('Unknown');
+}
+
+function _agileissues_story_size_name($size) {
+  switch ($size) {
+    case 1:
+      return t('Tiny');
+    case 2:
+      return t('Small');
+    case 4:
+      return t('Medium');
+    case 6:
+      return t('Large');
+    case 10:
+      return t('Huge');
+    case 50:
+      return t('Colossal');
+    case 100:
+      return t('Manhatten');
+  }
+  return t('Unknown');
+}
+
+function _agileissues_project_name($project_id) {
+  $project = agileissues_project_load($project_id);
+  if (empty($project)) {
+    return t('None');
+  }
+  return t($project->name);
+}
+
+function _agileissues_get_story_status_name($code) {
+  switch ($code) {
+    case 'A':
+      return t('Active');
+    case 'C':
+      return t('Complete');
+  }
+  return t('Unknown');
+}
+
+function _agileissues_format_time($time) {
+  $minutes = $time * 60;
+  return t('@mins minutes', array('@mins' => $minutes));
+}
+
+function _agileissues_user_name($uid) {
+  $user = user_load($uid);
+  if (empty($user)) {
+    return t('None');
+  }
+  return $user->name;
+}
+
+function _agileissues_task_story_name($story_id) {
+  $story = agileissues_story_load($story_id);
+  if (empty($story)) {
+    return t('None');
+  }
+  return $story->title;
+}
+
+function _agileissues_sprint_name($sprint_id) {
+  $sprint = agileissues_sprint_load($sprint_id);
+  if (empty($sprint)) {
+    return t('None');
+  }
+  return t($sprint->name);
 }
 
 function _agileissues_register_changelog($etype, $eid, $property, $old, $new) {
@@ -179,14 +306,21 @@ function _agileissues_register_all_changes($type, $old, $new) {
     $old_value = NULL;
     $new_value = NULL;
     if (isset($processor['index callback'])) {
-      $old_value = $processor['index callback']($old);
-      $new_value = $processor['index callback']($new);
+      $old_args = isset($processor['index arguments']) ? $processor['index arguments'] : array();
+      array_unshift($old_args, $old);
+      $old_value = call_user_func_array($processor['index callback'], $old_args);
+      $new_args = isset($processor['index arguments']) ? $processor['index arguments'] : array();
+      array_unshift($new_args, $new);
+      $new_value = call_user_func_array($processor['index callback'], $new_args);
     }
     elseif (isset($processor['index'])) {
       $old_value = $old->{$processor['index']};
       $new_value = $new->{$processor['index']};
     }
     if ($old_value != $new_value) {
+      if (isset($processor['alter callback'])) {
+        $processor['alter callback']($old_value, $new_value);
+      }
       _agileissues_register_change($type, $new->id, $key, $old_value, $new_value);
     }
   }
@@ -230,19 +364,23 @@ function _agileissues_append_changelog(&$notes, $type, $object, $view_mode) {
     ->execute();
   $processors = agileissues_changelog_processors($type);
   foreach ($change_notes as $note) {
-    $processor = $processors[$changenote->property_key];
+    $processor = $processors[$note->property_key];
     $render = array(
       '#theme' => 'agileissues_changelog_entry',
       '#label' => $processor['display'],
-      '#old' => $changenote->old_value,
-      '#new' => $changenote->new_value,
-      '#agile_date' => $changenote->created,
+      '#old' => $note->old_value,
+      '#new' => $note->new_value,
+      '#agile_date' => $note->created,
       '#agile_note_type' => 'agile_changelog_note',
-      '#user' => $changenote->uid,
+      '#user' => $note->uid,
     );
     if (!empty($processor['display callback'])) {
-      $render['#old'] = $processor['display callback']($render['#old']);
-      $render['#new'] = $processor['display callback']($render['#new']);
+      $old_args = isset($processor['display arguments']) ? $processor['display arguments'] : array();
+      array_unshift($old_args, $render['#old']);
+      $render['#old'] = call_user_func_array($processor['display callback'], $old_args);
+      $new_args = isset($processor['display arguments']) ? $processor['display arguments'] : array();
+      array_unshift($new_args, $render['#new']);
+      $render['#new'] = call_user_func_array($processor['display callback'], $new_args);
     }
     $notes[] = $render;
   }

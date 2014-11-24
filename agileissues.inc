@@ -1,6 +1,29 @@
 <?php
 
-function agileissues_construct_changelog_processor($display, $index, $index_display_callback, $include = 'internal.inc', $dynamic = FALSE) {
+function agileissues_construct_changelog_field_processors($name, $field, $instance, $field_property, $display_callback = NULL, $include = 'internal.inc') {
+  $languages = array(LANGUAGE_NONE);
+  $all = language_list();
+  if ($field['translatable']) {
+    $languages = array_keys($all);
+  }
+  $processors = array();
+  foreach ($languages as $lang) {
+    $processors[$name . '-' . $lang] = array(
+      'display' => $instance['label'] . ($lang == LANGUAGE_NONE ? '' : ' ' . t($all[$lang]->name)),
+      'index callback' => '_agileissues_get_field_values',
+      'index arguments' => array($field_property, $name, $lang),
+      'display callback' => '_agileissues_display_field_values',
+      'display arguments' => array($display_callback, $name),
+      'alter callback' => '_agileissues_alter_field_values',
+      'include' => $include,
+    );
+  }
+  return array(
+    
+  );
+}
+
+function agileissues_construct_changelog_processor($display, $index, $index_display_callback = NULL, $include = 'internal.inc', $dynamic = FALSE) {
   $index_key = 'index';
   if ($dynamic) {
     $index_key = 'index callback';
@@ -95,7 +118,7 @@ function agileissues_calculate_geometric_mean($dataset) {
     }
   }
   if (empty($count)) { return 0; }
-  return pow($product, 1 / $count);
+  return ceil(pow($product, 1 / $count));
 }
 
 function agileissues_get_task_actual_effort($taskID) {

@@ -64,12 +64,45 @@ function _agileissues_default_changelog_processors($object_type) {
 function _agileissues_default_task_changelog_processors() {
   $processors = array();
   $processors['task-status'] = agileissues_construct_changelog_processor(t('Task Status'), 'status', '_agileissues_task_status_name');
+  $processors['title'] = agileissues_construct_changelog_processor(t('Title'), 'title');
+  $processors['story-id'] = agileissues_construct_changelog_processor(t('Story'), 'story_id', '_agileissues_task_story_name');
+  $processors['sprint-id'] = agileissues_construct_changelog_processor(t('Sprint'), 'sprint_id', '_agileissues_sprint_name');
+  $processors['uid'] = agileissues_construct_changelog_processor(t('Assignee'), 'uid', '_agileissues_user_name');
+  $processors['estimated_time'] = agileissues_construct_changelog_processor(t('Estimated Time'), 'estimated_time', '_agileissues_format_time');
+  $processors += _agileissues_default_field_processors('agile_task');
   return $processors;
 }
 
 function _agileissues_default_story_changelog_processors() {
   $processors = array();
   $processors['backlog'] = agileissues_construct_changelog_processor(t('Backlog'), 'backlog_id', '_agileissues_backlog_name');
+  $processors['title'] = agileissues_construct_changelog_processor(t('Title'), 'title');
+  $processors['project-id'] = agileissues_construct_changelog_processor(t('Project'), 'project_id', '_agileissues_project_name');
+  $processors['primary-uid'] = agileissues_construct_changelog_processor(t('Internal Contact'), 'primary_uid', '_agileissues_user_name');
+  $processors['story-points'] = agileissues_construct_changelog_processor(t('Story Size'), 'story_points', '_agileissues_story_size_name');
+  $processors['status'] = agileissues_construct_changelog_processor(t('Status'), 'status', '_agileissues_get_story_status_name');
+  $processors['sprint-id'] = agileissues_construct_changelog_processor(t('Completed'), 'sprint_id', '_agileissues_sprint_name');
+  $processors += _agileissues_default_field_processors('agile_story');
+  return $processors;
+}
+
+function _agileissues_default_field_processors($type) {
+  $processors = array();
+  $fields = field_info_instances($type);
+  foreach ($fields as $name => $instance) {
+    $field = field_info_field($name);
+    switch ($field['type']) {
+      case 'number_integer':
+        $processors += agileissues_construct_changelog_field_processor($name, $field, $instance, 'value');
+        break;
+      case 'taxonomy_term_reference':
+        $processors += agileissues_construct_changelog_field_processor($name, $field, $instance, 'tid', '_agileissues_taxonomy_term_name');
+        break;
+      case 'date':
+        $processors += agileissues_construct_changelog_field_processor($name, $field, $instance, 'value', '_agileissues_date_display');
+        break;
+    }
+  }
   return $processors;
 }
 
