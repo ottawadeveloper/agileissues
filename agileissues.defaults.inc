@@ -243,7 +243,7 @@ function _agileissues_default_theme_hooks($path) {
   return array(
     'agileissues_task_note_entry' => array(
       'render element' => 'change',
-      'template' => 'agielissues-task-note-entry',
+      'template' => 'agileissues-task-note-entry',
       'path' => $path,
     ),
     'agileissues_changelog_entry' => array(
