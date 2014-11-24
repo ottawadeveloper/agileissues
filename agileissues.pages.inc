@@ -339,7 +339,7 @@ function agileissues_save_all_relationships($object, $type, &$form_state) {
   agileissues_clear_relationships($object, $type);
   foreach ($form_state['values']['relationships'] as $relationship) {
     if (!empty($relationship['type']) && !empty($relationship['object'])) {
-      agileissues_save_relationships($object, $type, $relationship['type'], $relationship['object']);
+      _agileissues_save_relationships($object, $type, $relationship['type'], $relationship['object']);
     }
   }
 }
