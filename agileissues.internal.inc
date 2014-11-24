@@ -214,7 +214,7 @@ function _agileissues_append_actual_notes(&$notes, $type, $object, $view_mode) {
     ->execute()->fetchAllKeyed(0, 0);
   $entities = agileissues_note_load_multiple($ids);
   $views = entity_view('agile_note', $entities, 'full');
-  foreach ($views as $id => $view) {
+  foreach ($views['agile_note'] as $id => $view) {
     $notes[] = $view + array(
       '#agile_date' => $entities[$id]->created,
       '#agile_note_type' => 'agile_note',
