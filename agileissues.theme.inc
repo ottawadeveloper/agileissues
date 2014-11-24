@@ -1,21 +1,19 @@
 <?php
 
 function theme_agileissues_bar($vars) {
-  $ops = array();
+  $object = NULL;
   switch ($vars['type']) {
-    case 'global':
-      $ops = _agileissues_get_global_actions($vars['mode']);
-      break;
     case 'project':
-      $ops = _agileissues_project_operations($vars['project'], $vars['mode']);
+      $object = $vars['project'];
       break;
     case 'story':
-      $ops = _agileissues_story_operations($vars['story'], $vars['mode']);
+      $object = $vars['story'];
       break;
     case 'task':
-      $ops = _agileissues_task_operations($vars['task'], $vars['mode']);
+      $object = $vars['task'];
       break;
   }
+  $ops = agileissues_operations($vars['type'], $object, $vars['mode']);
   $output = '';
   $output .= '<ul class="agile-control-bar">';
   foreach ($ops as $op) {
