@@ -73,7 +73,7 @@ function agileissues_update_7103() {
   }
   if (!db_field_exists('agileissues_tasks', 'creator')) {
     db_add_field('agileissues_tasks', 'creator', array(
-      'type' => 'int'
+      'type' => 'int',
       'size' => 'normal',
       'unsigned' => TRUE,
       'not null' => FALSE,
