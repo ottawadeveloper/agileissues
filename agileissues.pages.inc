@@ -244,7 +244,6 @@ function agileissues_story_form($form, &$form_state, $story = NULL, $project = N
       '#empty_value' => 0,
       '#empty_option' => t('Unknown'),
       '#default_value' => $story->story_points,
-      '#size' => 5,
       '#weight' => -25,
     ),
   );
