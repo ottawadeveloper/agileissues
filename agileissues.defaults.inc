@@ -103,14 +103,14 @@ function _agileissues_default_project_operations($project, $render = 'main') {
   }
   if (user_access('open new agile stories')) {
     $ops['open'] = l(t('New Story'), 'agile/project/' . $project->id . '/open-request/nojs', array('attributes' => array('class' => 'ctools-use-modal')));
-    if ($type == 'main') {
+    if ($render == 'main') {
       $ops['my-reported'] = l(t('My Stories'), 'agile/project/' . $project->id . '/my-reported-stories');
     }
   }
-  if (user_access('own agile tasks') && $type == 'main') {
+  if (user_access('own agile tasks') && $render == 'main') {
     $ops['my-tasks'] = l(t('My Tasks'), 'agile/project/' . $project->id . '/my-tasks');
   }
-  if (user_access('own agile stories') && $type == 'main') {
+  if (user_access('own agile stories') && $render == 'main') {
     $ops['assigned-stories'] = l(t('My Portfolio'), 'agile/project/' . $project->id . '/my-stories');
   }
   if (user_access('manage agile stories')) {
@@ -125,7 +125,7 @@ function _agileissues_default_project_operations($project, $render = 'main') {
   if (user_access('manage agile tasks')) {
     $ops['manage-tasks'] = l(t('Unscheduled Tasks'), 'agile/project/' . $project->id . '/task-management');
   }
-  if (user_access('manage agile projects') && $type === 'main') {
+  if (user_access('manage agile projects') && $render === 'main') {
     $ops['edit'] = l(t('Edit Project'), 'admin/content/agile/project/' . $project->id);
   }
   return $ops;
