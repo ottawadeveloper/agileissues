@@ -53,6 +53,35 @@ function agileissues_update_7102() {
 }
 
 /**
+ * New DB fields!
+ */
+function agileissues_update_7103() {
+  if (!db_field_exists('agileissues_stories', 'status')) {
+    db_add_field('agileissues_stories', 'status', array(
+      'type' => 'char',
+      'length' => 1,
+      'not null' => TRUE,
+    ));
+  }
+  if (!db_field_exists('agileissues_stories', 'sprint_id')) {
+    db_add_field('agileissues_stories', 'sprint_id', array(
+      'type' => 'int',
+      'size' => 'normal',
+      'unsigned' => TRUE,
+      'not null' => FALSE,
+    ));
+  }
+  if (!db_field_exists('agileissues_tasks', 'creator')) {
+    db_add_field('agileissues_tasks', 'creator', array(
+      'type' => 'int'
+      'size' => 'normal',
+      'unsigned' => TRUE,
+      'not null' => FALSE,
+    ));
+  }
+}
+
+/**
  * Table definition for agileissues_relationships
  */
 function _agileissues_schema_relationships() {
@@ -544,7 +573,7 @@ function _agileissues_schema_stories() {
         'size' => 'normal',
         'unsigned' => TRUE,
         'not null' => FALSE,
-      )
+      ),
     ),
     'primary key' => array(
       'id',
