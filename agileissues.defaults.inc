@@ -89,18 +89,20 @@ function _agileissues_default_story_changelog_processors() {
 function _agileissues_default_field_processors($type) {
   $processors = array();
   $fields = field_info_instances($type);
-  foreach ($fields as $name => $instance) {
-    $field = field_info_field($name);
-    switch ($field['type']) {
-      case 'number_integer':
-        $processors += agileissues_construct_changelog_field_processor($name, $field, $instance, 'value');
-        break;
-      case 'taxonomy_term_reference':
-        $processors += agileissues_construct_changelog_field_processor($name, $field, $instance, 'tid', '_agileissues_taxonomy_term_name');
-        break;
-      case 'date':
-        $processors += agileissues_construct_changelog_field_processor($name, $field, $instance, 'value', '_agileissues_date_display');
-        break;
+  foreach ($fields as $type => $list) {
+    foreach ($list as $name => $instance) {
+      $field = field_info_field($name);
+      switch ($field['type']) {
+        case 'number_integer':
+          $processors += agileissues_construct_changelog_field_processor($name, $field, $instance, 'value');
+          break;
+        case 'taxonomy_term_reference':
+          $processors += agileissues_construct_changelog_field_processor($name, $field, $instance, 'tid', '_agileissues_taxonomy_term_name');
+          break;
+        case 'date':
+          $processors += agileissues_construct_changelog_field_processor($name, $field, $instance, 'value', '_agileissues_date_display');
+          break;
+      }
     }
   }
   return $processors;
