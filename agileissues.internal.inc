@@ -203,7 +203,7 @@ function _agileissues_taxonomy_term_name($tid) {
 function _agileissues_backlog_name($backlog_id) {
   $backlog = agileissues_backlog_load($backlog_id);
   if (empty($backlog)) {
-    return t('None');
+    return t('Unassigned');
   }
   return t($backlog->name);
 }
@@ -213,11 +213,13 @@ function _agileissues_task_status_name($code) {
     case 'O': return t('Open');
     case 'C': return t('Closed');
   }
-  return t('Unknown');
+  return '';
 }
 
 function _agileissues_story_size_name($size) {
   switch ($size) {
+    case 0:
+      return t('Unknown');
     case 1:
       return t('Tiny');
     case 2:
@@ -233,13 +235,13 @@ function _agileissues_story_size_name($size) {
     case 100:
       return t('Manhatten');
   }
-  return t('Unknown');
+  return '';
 }
 
 function _agileissues_project_name($project_id) {
   $project = agileissues_project_load($project_id);
   if (empty($project)) {
-    return t('None');
+    return '';
   }
   return t($project->name);
 }
@@ -251,18 +253,18 @@ function _agileissues_get_story_status_name($code) {
     case 'C':
       return t('Complete');
   }
-  return t('Unknown');
+  return '';
 }
 
 function _agileissues_format_time($time) {
-  $minutes = $time * 60;
-  return t('@mins minutes', array('@mins' => $minutes));
+  if (empty($time)) { return ''; }
+  return t('@mins minutes', array('@mins' => $time));
 }
 
 function _agileissues_user_name($uid) {
   $user = user_load($uid);
   if (empty($user)) {
-    return t('None');
+    return '';
   }
   return $user->name;
 }
@@ -270,15 +272,23 @@ function _agileissues_user_name($uid) {
 function _agileissues_task_story_name($story_id) {
   $story = agileissues_story_load($story_id);
   if (empty($story)) {
-    return t('None');
+    return '';
   }
   return $story->title;
+}
+
+function _agileissues_story_sprint_name($sprint_id) {
+  $sprint = agileissues_sprint_load($sprint_id);
+  if (empty($sprint)) {
+    return t('Unreleased');
+  }
+  return t($sprint->name);
 }
 
 function _agileissues_sprint_name($sprint_id) {
   $sprint = agileissues_sprint_load($sprint_id);
   if (empty($sprint)) {
-    return t('None');
+    return t('Unassigned');
   }
   return t($sprint->name);
 }
