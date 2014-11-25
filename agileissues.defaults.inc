@@ -94,13 +94,13 @@ function _agileissues_default_field_processors($type) {
       $field = field_info_field($name);
       switch ($field['type']) {
         case 'number_integer':
-          $processors += agileissues_construct_changelog_field_processor($name, $field, $instance, 'value');
+          $processors += agileissues_construct_changelog_field_processors($name, $field, $instance, 'value');
           break;
         case 'taxonomy_term_reference':
-          $processors += agileissues_construct_changelog_field_processor($name, $field, $instance, 'tid', '_agileissues_taxonomy_term_name');
+          $processors += agileissues_construct_changelog_field_processors($name, $field, $instance, 'tid', '_agileissues_taxonomy_term_name');
           break;
         case 'date':
-          $processors += agileissues_construct_changelog_field_processor($name, $field, $instance, 'value', '_agileissues_date_display');
+          $processors += agileissues_construct_changelog_field_processors($name, $field, $instance, 'value', '_agileissues_date_display');
           break;
       }
     }
