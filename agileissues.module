@@ -411,13 +411,19 @@ function agileissues_unassigned_stories($project = NULL) {
 function agileissues_unassigned_tasks($project = NULL) {
   $q = db_select('agileissues_tasks', 'ait');
   if (!empty($project)) {
-    $q->condition('story_id', agileissues_project_story_ids($project));
+    $story_ids = agileissues_project_story_ids($project);
+    if (empty($story_ids)) {
+      return array();
+    }
+    $q->condition('story_id', $story_ids);
   }
-  return entity_get_controller('agile_task')->load($q
+  $task_ids = $q
     ->condition('sprint_id', 0)
     ->fields('ait', array('id'))
     ->execute()
-    ->fetchAllKeyed(0, 0));
+    ->fetchAllKeyed(0, 0);
+  if (empty($task_ids)) { return array(); }
+  return entity_get_controller('agile_task')->load($task_ids);
 }
 
 function agileissues_project_sprints($agile_project) {
