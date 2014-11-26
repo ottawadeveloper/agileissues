@@ -18,9 +18,7 @@ function agileissues_construct_changelog_field_processors($name, $field, $instan
       'include' => $include,
     );
   }
-  return array(
-    
-  );
+  return $processors;
 }
 
 function agileissues_construct_changelog_processor($display, $index, $index_display_callback = NULL, $include = 'internal.inc', $dynamic = FALSE) {

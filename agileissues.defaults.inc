@@ -99,8 +99,17 @@ function _agileissues_default_field_processors($type) {
         case 'taxonomy_term_reference':
           $processors += agileissues_construct_changelog_field_processors($name, $field, $instance, 'tid', '_agileissues_taxonomy_term_name');
           break;
+        case 'datetime':
         case 'date':
           $processors += agileissues_construct_changelog_field_processors($name, $field, $instance, 'value', '_agileissues_date_display');
+          break;
+        // other known fields that maybe we care about.
+        case 'list_boolean':
+        case 'link_field':
+        case 'file':
+        case 'text_long':
+        case 'text_with_summary':
+        case 'entityreference':
           break;
       }
     }
