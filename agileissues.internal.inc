@@ -145,8 +145,8 @@ function _agileissues_update_priorities() {
 
 function _agileissues_get_field_values($object, $field_property, $field_name, $language) {
   $values = array();
-  if (!empty($object->{$field_property})) {
-    $fields = $object->{$field_property};
+  if (!empty($object->{$field_name})) {
+    $fields = $object->{$field_name};
     if (!empty($fields[$language])) {
       foreach ($fields[$language] as $dataset) {
         $values[$language][$dataset[$field_property]] = $dataset[$field_property];
