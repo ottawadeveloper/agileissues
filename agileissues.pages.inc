@@ -411,7 +411,7 @@ function agileissues_story_move_form($form, &$form_state, $story) {
 
 function agileissues_story_move_form_submit($form, &$form_state) {
   global $user;
-  $story = $form_state['values']['story'];
+  $story = clone $form_state['values']['story'];
   $story->backlog_id = $form_state['values']['backlog_id'];
   if (agileissues_story_save($story)) { 
     if (!empty($form_state['values']['change_notes'])) {
@@ -513,18 +513,18 @@ function agileissues_note_form_submit($form, &$form_state) {
     drupal_set_message(t('Note has been saved.'));
     if ($note->entity_type === 'task') {
       if (!empty($form_state['values']['complete_task'])) {
-        $task = agileissues_task_load($note->entity_id);
+        $task = clone agileissues_task_load($note->entity_id);
         $task->status = 'C';
         agileissues_save_task($task);
         if (!empty($form_state['values']['close_story'])) {
-          $story = agileissues_story_load($task->story_id);
+          $story = clone agileissues_story_load($task->story_id);
           $story->status = 'C';
           agileissues_save_story($story);
         }
       }
     }
     elseif (!empty($form_state['values']['close_story'])) {
-      $story = agileissues_story_load($note->entity_id);
+      $story = clone agileissues_story_load($note->entity_id);
       $story->status = 'C';
       agileissues_save_story($story);
     }
@@ -756,13 +756,6 @@ function agileissues_task_form_submit($form, &$form_state) {
   $stub['estimated_time'] = ceil($stub['estimated_time'] * 60);
   $entity = (object) $stub;
   field_attach_submit('agile_task', $entity, $form, $form_state);
-  $new = TRUE;
-  $changes = array();
-  if (!empty($entity->id)) {
-    $new = FALSE;
-    $old = agileissues_task_load($entity->id);
-    $changes = agileissues_process_changelog($old, $entity, 'task');
-  }
   ctools_include('ajax');
   if (agileissues_save_task($entity)) {
     if (!$new) {
@@ -777,7 +770,6 @@ function agileissues_task_form_submit($form, &$form_state) {
         'time_spent' => 0,
       );
       agileissues_save_note($note);
-      agileissues_save_changelog($note, $changes);
     }
     drupal_set_message(t('Task saved successfully.'));
     $form_state['ajax_commands'][] = ctools_ajax_command_reload();
@@ -992,7 +984,7 @@ function agileissues_task_assign_form($form, &$form_state, $task) {
 
 function agileissues_task_assign_form_submit($form, &$form_state) {
   $keys = array('estimated_time', 'uid', 'sprint_id');
-  $task = $form_state['values']['task'];
+  $task = clone $form_state['values']['task'];
   foreach ($keys as $key) {
     $task->{$key} = $form_state['values'][$key];
   }
