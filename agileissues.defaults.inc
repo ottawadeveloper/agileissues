@@ -189,15 +189,15 @@ function _agileissues_default_story_operations($story, $render = 'main') {
   if (agileissues_story_access('move', $story)) {
     $ops[] = l(t('Move'), 'agile/story/' . $story->id . '/move/nojs', array('attributes' => array('class' => 'ctools-use-modal')));
   }
-  if (agileissues_story_access('delete', $story)) {
-    $query = array('query' => drupal_get_destination());
-    $ops[] = l(t('Delete'), 'agile/story/' . $story->id . '/delete/nojs', array('attributes' => array('class' => 'ctools-use-modal')) + $query);
-  }
   if (user_access('add agile story notes')) {
     $ops[] = l(t('Add Note'), 'agile/story/' . $story->id . '/note/nojs', array('attributes' => array('class' => 'ctools-use-modal')));
   }
   if (user_access('open new agile tasks')) {
     $ops[] = l(t('Add Task'), 'agile/story/' . $story->id . '/task/nojs', array('attributes' => array('class' => 'ctools-use-modal')));
+  }
+  if (agileissues_story_access('delete', $story)) {
+    $query = array('query' => drupal_get_destination());
+    $ops[] = l(t('Delete'), 'agile/story/' . $story->id . '/delete/nojs', array('attributes' => array('class' => 'ctools-use-modal')) + $query);
   }
   return $ops;
 }
@@ -213,15 +213,21 @@ function _agileissues_default_task_operations($task, $mode = 'main') {
   if (agileissues_task_access('edit', $task)) {
     $ops[] = l(t('Edit'), 'agile/task/' . $task->id . '/edit/nojs', array('attributes' => array('class' => 'ctools-use-modal')));
   }
-  $query = array('query' => drupal_get_destination());
-  if (agileissues_task_access('delete', $task)) {
-    $ops[] = l(t('Delete'), 'agile/task/' . $task->id . '/delete/nojs', array('attributes' => array('class' => 'ctools-use-modal')) + $query);
-  }
   if (agileissues_task_access('note', $task)) {
     $ops[] = l(t('Add Note'), 'agile/task/' . $task->id . '/note/nojs', array('attributes' => array('class' => 'ctools-use-modal')));
   }
   if (user_access('manage internal task data')) {
     $ops[] = l(t('Assign'), 'agile/task/' . $task->id . '/assign/nojs', array('attributes' => array('class' => 'ctools-use-modal')));
+  }
+  if (!empty($task->story_id)) {
+    $story = agileissues_story_load($task->story_id);
+    if (agileissues_story_access('view', $story)) {
+      $ops[] = l(t('View Story'), 'agile/story/' . $task->story_id . '/nojs', array('attributes' => array('class' => 'ctools-use-modal')));
+    }
+  }
+  if (agileissues_task_access('delete', $task)) {
+    $query = array('query' => drupal_get_destination());
+    $ops[] = l(t('Delete'), 'agile/task/' . $task->id . '/delete/nojs', array('attributes' => array('class' => 'ctools-use-modal')) + $query);
   }
   return $ops;
 }
