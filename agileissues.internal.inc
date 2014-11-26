@@ -197,7 +197,9 @@ function _agileissues_date_display($date_string) {
 
 function _agileissues_taxonomy_term_name($tid) {
   $term = taxonomy_term_load($tid);
-  return $term->name;
+  if (!empty($term)) {
+    return $term->name;
+  }
 }
 
 function _agileissues_backlog_name($backlog_id) {

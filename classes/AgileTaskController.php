@@ -19,6 +19,7 @@ class AgileTaskController extends EntityApiController {
       $old = agileissues_task_load($entity->id);
     }
     parent::save($entity, $transaction);
+    _agileissues_clear_relationships($entity, 'task');
     if (!empty($old)) {
       module_load_include('internal.inc', 'agileissues');
       _agileissues_register_all_changes('task', $old, $entity);
