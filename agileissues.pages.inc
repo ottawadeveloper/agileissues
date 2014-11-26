@@ -400,11 +400,11 @@ function agileissues_story_move_form($form, &$form_state, $story) {
   $form['change_notes'] = array(
     '#type' => 'textarea',
     '#title' => t('Change note'),
-    '#weight' => 9999,
   );
   $form['save'] = array(
     '#type' => 'submit',
     '#value' => t('Move Story'),
+    '#weight' => 9999,
   );
   return $form;
 }

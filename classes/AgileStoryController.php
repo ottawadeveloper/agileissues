@@ -18,7 +18,6 @@ class AgileStoryController extends EntityApiController {
       $old = agileissues_story_load($entity->id);
     }
     parent::save($entity, $transaction);
-    _agileissues_clear_relationships($entity, 'story');
     if (!empty($old)) {
       module_load_include('internal.inc', 'agileissues');
       _agileissues_register_all_changes('story', $old, $entity);
@@ -41,6 +40,22 @@ class AgileStoryController extends EntityApiController {
       if (!empty($tasks)) {
         entity_get_controller('agile_task')->delete($tasks, $transaction);
       }
+      db_delete('agileissues_relationships')
+        ->condition('left_entity_type', 'story')
+        ->condition('left_entity_id', $ids)
+        ->execute();
+      db_delete('agileissues_relationships')
+        ->condition('right_entity_type', 'story')
+        ->condition('right_entity_id', $ids)
+        ->execute();
+      db_delete('agileissues_notes')
+        ->condition('entity_type', 'story')
+        ->condition('entity_id', $ids)
+        ->execute();
+      db_delete('agileissues_changelog')
+        ->condition('entity_type', 'story')
+        ->condition('entity_id', $ids)
+        ->execute();
       parent::delete($ids, $transaction);
       return TRUE;
     }
