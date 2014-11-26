@@ -5,7 +5,7 @@ $options = array(
   'type' => empty($list['#project']) ? 'global' : 'project',
 );
 echo theme('agileissues_bar', $options);
-echo '<div id="agile-story-list">';
+echo '<div class="agile-story-list">';
 if (empty($list['#ids'])) {
   echo '<p>There are no stories to be shown.</p>';
 }
