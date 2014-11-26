@@ -149,7 +149,7 @@ function _agileissues_get_field_values($object, $field_property, $field_name, $l
     $fields = $object->{$field_name};
     if (!empty($fields[$language])) {
       foreach ($fields[$language] as $dataset) {
-        $values[$language][$dataset[$field_property]] = $dataset[$field_property];
+        $values[$dataset[$field_property]] = $dataset[$field_property];
       }
     }
   }
