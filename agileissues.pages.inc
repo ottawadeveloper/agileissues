@@ -644,6 +644,10 @@ function agileissues_task_form($form, &$form_state, $task = NULL, $story = NULL)
     '#type' => 'value',
     '#value' => $task->id,
   );
+  $form['created'] = array(
+    '#type' => 'value',
+    '#value' => $task->created,
+  );
   $form['creator'] = array(
     '#type' => 'value',
     '#value' => $task->creator,
@@ -758,7 +762,7 @@ function agileissues_task_form_submit($form, &$form_state) {
   field_attach_submit('agile_task', $entity, $form, $form_state);
   ctools_include('ajax');
   if (agileissues_save_task($entity)) {
-    if (!$new) {
+    if (!empty($form_state['values']['change_note'])) {
       $note = (object) array(
         'entity_type' => 'task',
         'entity_id' => $entity->id,
