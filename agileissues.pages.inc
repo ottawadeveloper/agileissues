@@ -519,14 +519,14 @@ function agileissues_note_form_submit($form, &$form_state) {
         if (!empty($form_state['values']['close_story'])) {
           $story = clone agileissues_story_load($task->story_id);
           $story->status = 'C';
-          agileissues_save_story($story);
+          agileissues_story_save($story);
         }
       }
     }
     elseif (!empty($form_state['values']['close_story'])) {
       $story = clone agileissues_story_load($note->entity_id);
       $story->status = 'C';
-      agileissues_save_story($story);
+      agileissues_story_save($story);
     }
     ctools_include('ajax');
     $form_state['ajax_commands'][] = ctools_ajax_command_reload();
