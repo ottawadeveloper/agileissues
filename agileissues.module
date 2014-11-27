@@ -514,10 +514,10 @@ function agileissues_public_access($type, $object = NULL, $subobject = NULL) {
   switch ($type) { 
     case 'home':
       return user_access('browse public agile stories') ||
-          user_access('browse public agiel tasks');
+          user_access('browse public agile tasks');
     case 'project':
       return user_access('browse public agile stories') ||
-          user_access('browse public agiel tasks');
+          user_access('browse public agile tasks');
     case 'backlog':
       return user_access('browse public agile stories');
     case 'sprint':

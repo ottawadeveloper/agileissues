@@ -42,6 +42,11 @@ function agileissues_backlog_landing_page($project, $backlog = NULL) {
   ctools_include('modal');
   ctools_modal_add_js();
   drupal_add_css(drupal_get_path('module', 'agileissues') . '/misc/agileissues.css');
+  $name = t('New');
+  if (!empty($backlog)) {
+    $name = t($backlog->name);
+  }
+  drupal_set_title($name);
   return array(
     '#theme' => 'agileissues_public_backlog_list',
     '#backlog' => $backlog,
@@ -53,6 +58,11 @@ function agileissues_sprint_landing_page($project, $sprint = NULL) {
   ctools_include('modal');
   ctools_modal_add_js();
   drupal_add_css(drupal_get_path('module', 'agileissues') . '/misc/agileissues.css');
+  $name = t('Unscheduled');
+  if (!empty($sprint)) {
+    $name = t($sprint->name);
+  }
+  drupal_set_title($name);
   return array(
     '#theme' => 'agileissues_public_sprint_list',
     '#sprint' => $sprint,

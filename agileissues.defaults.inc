@@ -168,10 +168,7 @@ function _agileissues_default_project_operations($project, $render = 'main') {
     $ops['view-public-sprints'] = l(t('Sprints'), 'agile-public/project/' . $project->id . '/sprints');
   }
   if (agileissues_project_access($project)) {
-    $ops['view'] = l(t('View'), 'agile/project/' . $project->id);
-  }
-  if (user_access('view agile statistics')) {
-    $ops['stats'] = l(t('Metrics'), 'agile/project/' . $project->id . '/stats');
+    $ops['view'] = l($render === 'public' ? t('Manage') : t('View'), 'agile/project/' . $project->id);
   }
   if (agileissues_search_access()) {
     $ops['search'] = l(t('Search'), 'agile/search/@projectid=' . $project->id);
@@ -203,6 +200,9 @@ function _agileissues_default_project_operations($project, $render = 'main') {
   if (user_access('manage agile projects') && $render === 'main') {
     $ops['edit'] = l(t('Edit Project'), 'admin/content/agile/project/' . $project->id);
   }
+  if (user_access('view agile statistics')) {
+    $ops['stats'] = l(t('Metrics'), 'agile/project/' . $project->id . '/stats');
+  }
   return $ops;
 }
 
@@ -211,7 +211,10 @@ function _agileissues_default_story_operations($story, $render = 'main') {
   ctools_include('modal');
   ctools_modal_add_js();
   $ops = array();
-  if (agileissues_story_access('view', $story)) {
+  if ($render ==='public' && agileissues_public_access('story', $story)) {
+    $ops[] = l(t('View'), 'agile-public/story/' . $story->id . '/nojs', array('attributes' => array('class' => 'ctools-use-modal')));
+  }
+  elseif (agileissues_story_access('view', $story)) {
     $ops[] = l(t('View'), 'agile/story/' . $story->id . '/nojs', array('attributes' => array('class' => 'ctools-use-modal')));
   }
   if (agileissues_story_access('edit', $story)) {
@@ -238,7 +241,10 @@ function _agileissues_default_task_operations($task, $mode = 'main') {
   ctools_include('modal');
   ctools_modal_add_js();
   $ops = array();
-  if (agileissues_task_access('view', $task)) {
+  if ($render ==='public' && agileissues_public_access('task', $task)) {
+    $ops[] = l(t('View'), 'agile-public/task/' . $task->id . '/nojs', array('attributes' => array('class' => 'ctools-use-modal')));
+  }
+  elseif (agileissues_task_access('view', $task)) {
     $ops[] = l(t('View'), 'agile/task/' . $task->id . '/nojs', array('attributes' => array('class' => 'ctools-use-modal')));
   }
   if (agileissues_task_access('edit', $task)) {
