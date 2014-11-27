@@ -583,8 +583,8 @@ function agileissues_public_access($type, $object = NULL, $subobject = NULL) {
       }
       return user_access('browse public agile stories');
     case 'task':
-      if ($object->reporting_uid == $user->uid) { $hidden = TRUE; $internal = TRUE; }
-      if ($object->primary_uid === $user->uid) { $hidden = TRUE; $internal = TRUE; }
+      if ($object->uid == $user->uid) { $hidden = TRUE; $internal = TRUE; }
+      if ($object->creator === $user->uid) { $hidden = TRUE; $internal = TRUE; }
       if ($object->privacy === 'I' && !$internal) {
         return FALSE;
       }
