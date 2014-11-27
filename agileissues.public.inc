@@ -18,18 +18,30 @@ function agileissues_public_landing_page() {
 }
 
 function agileissues_project_landing_page($project) {
+  ctools_include('modal');
+  ctools_modal_add_js();
+  drupal_add_css(drupal_get_path('module', 'agileissues') . '/misc/agileissues.css');
   return entity_get_controller('agile_project')->view(array($project), 'public');
 }
 
 function agileissues_story_landing_page($story) {
+  ctools_include('modal');
+  ctools_modal_add_js();
+  drupal_add_css(drupal_get_path('module', 'agileissues') . '/misc/agileissues.css');
   return entity_get_controller('agile_story')->view(array($story), 'public');
 }
 
 function agileissues_task_landing_page($task) {
+  ctools_include('modal');
+  ctools_modal_add_js();
+  drupal_add_css(drupal_get_path('module', 'agileissues') . '/misc/agileissues.css');
   return entity_get_controller('agile_task')->view(array($task), 'public');
 }
 
 function agileissues_backlog_landing_page($project, $backlog = NULL) {
+  ctools_include('modal');
+  ctools_modal_add_js();
+  drupal_add_css(drupal_get_path('module', 'agileissues') . '/misc/agileissues.css');
   return array(
     '#theme' => 'agileissues_public_backlog_list',
     '#backlog' => $backlog,
@@ -38,6 +50,9 @@ function agileissues_backlog_landing_page($project, $backlog = NULL) {
 }
 
 function agileissues_sprint_landing_page($project, $sprint = NULL) {
+  ctools_include('modal');
+  ctools_modal_add_js();
+  drupal_add_css(drupal_get_path('module', 'agileissues') . '/misc/agileissues.css');
   return array(
     '#theme' => 'agileissues_public_sprint_list',
     '#sprint' => $sprint,
