@@ -10,7 +10,7 @@ function agileissues_search_form($form, &$form_state, $searchFor = NULL, $search
   else {
     drupal_set_title(t('Search tasks'));
   }
-  $form['#theme'] = 'agileissues_search';
+  $form['#theme'] = 'agileissues_search_form';
   $form['search'] = array(
     '#default_value' => $searchFor,
     '#title' => t('Search'),
