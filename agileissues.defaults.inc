@@ -414,6 +414,12 @@ function _agileissues_default_theme_hooks($path) {
 
 function _agileissues_default_permissions() {
   return array(
+    'browse public agile stories' => array(
+      'title' => t('Browse the public list of stories'),
+    ),
+    'browse public agile tasks' => array(
+      'title' => t('Browse the public list of tasks'),
+    ),
     'manage agile entities' => array(
       'title' => t('Manage agile entities'),
     ),
@@ -497,6 +503,69 @@ function _agileissues_default_permissions() {
 
 function _agileissues_default_menu() {
    $menu = array(
+    'agile-public' => array(
+      'title' => t('Agile'),
+      'file' => 'agileissues.public.inc',
+      'page callback' => 'agileissues_public_landing_page',
+      'access callback' => 'agileissues_public_access',
+      'access arguments' => array('home'),
+    ),
+    'agile-public/project/%agileissues_project' => array(
+      'title' => t('View Agile Project'),
+      'file' => 'agileissues.public.inc',
+      'page callback' => 'agileissues_project_landing_page',
+      'page arguments' => array(2),
+      'access callback' => 'agileissues_public_access',
+      'access arguments' => array('project', 2),
+    ),
+    'agile-public/project/%agileissues_project/backlog' => array(
+      'title' => t('New Stories'),
+      'page callback' => 'agileissues_backlog_landing_page',
+      'page arguments' => array(2),
+      'file' => 'agileissues.public.inc',
+      'access callback' => 'agileissues_public_access',
+      'access arguments' => array('backlog', 2),
+    ),
+     'agile-public/project/%agileissues_project/backlog/%agileissues_backlog' => array(
+      'title' => t('View Backlog'),
+      'page callback' => 'agileissues_backlog_landing_page',
+      'page arguments' => array(2, 4),
+      'file' => 'agileissues.public.inc',
+      'access callback' => 'agileissues_public_access',
+      'access arguments' => array('backlog', 2, 4),
+     ),
+     'agile-public/project/%agileissues_project/sprint' => array(
+      'title' => t('Unscheduled Tasks'),
+      'file' => 'agileissues.public.inc',
+      'page callback' => 'agileissues_sprint_landing_page',
+      'page arguments' => array(2),
+      'access callback' => 'agileissues_public_access',
+      'access arguments' => array('sprint', 2),
+     ),
+     'agile-public/project/%agileissues_project/sprint/%agileissues_sprint' => array(
+      'title' => t('View Sprint'),
+      'page callback' => 'agileissues_sprint_landing_page',
+      'page arguments' => array(2, 4),
+      'file' => 'agileissues.public.inc',
+      'access callback' => 'agileissues_public_access',
+      'access arguments' => array('sprint', 2, 4),
+     ),
+     'agile-public/story/%agileissues_story/%ctools_js' => array(
+      'title' => t('View Story'),
+      'page callback' => 'agileissues_get_content',
+      'page arguments' => array('agileissues_story_landing_page', 3, 2),
+      'file' => 'agileissues.public.inc',
+      'access callback' => 'agileissues_public_access',
+      'access arguments' => array('story', 2),
+     ),
+     'agile-public/task/%agileissues_task/%ctools_js' => array(
+      'title' => t('View Task'),
+      'file' => 'agileissues.public.inc',
+      'page callback' => 'agileissues_get_content',
+      'page arguments' => array('agileissues_task_landing_page', 3, 2),
+      'access callback' => 'agileissues_public_access',
+      'access arguments' => array('task', 2),
+     ),
     'agile/search-tips/%ctools_js' => array(
       'title' => 'Agile Search Tips',
       'page callback' => 'agileissues_get_content',
@@ -991,6 +1060,10 @@ function _agileissues_defaults_entity_info() {
         'label' => t('Teaser'),
         'custom settings' => FALSE,
       ),
+      'public' => array(
+        'label' => t('Public'),
+        'custom settings' => FALSE,
+      ),
     ),
   );
   $info['agile_story'] = array(
@@ -1016,6 +1089,10 @@ function _agileissues_defaults_entity_info() {
       ),
       'teaser' => array(
         'label' => t('Teaser'),
+        'custom settings' => FALSE,
+      ),
+      'public' => array(
+        'label' => t('Public'),
         'custom settings' => FALSE,
       ),
     ),
@@ -1066,6 +1143,10 @@ function _agileissues_defaults_entity_info() {
       ),
       'teaser' => array(
         'label' => t('Teaser'),
+        'custom settings' => FALSE,
+      ),
+      'public' => array(
+        'label' => t('Public'),
         'custom settings' => FALSE,
       ),
     ),

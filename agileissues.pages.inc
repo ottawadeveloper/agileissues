@@ -54,54 +54,8 @@ function agileissues_search_form_submit($form, &$form_state) {
   $form_state['rebuild'] = TRUE;
 }
 
-function agileissues_get_content($callback, $ajax) {
-  $args = func_get_args();
-  array_shift($args);
-  array_shift($args);
-  if ($ajax) {
-    ctools_include('modal');
-    $output = drupal_render(call_user_func_array($callback, $args));
-    $commands = array();
-    // If the form has not yet been rendered, render it.
-    $commands[] = ctools_modal_command_display(drupal_get_title(), $output);
-    print ajax_render($commands);
-    drupal_exit();
-  }
-  else {
-    return call_user_func_array($callback, $args);
-  }
-}
-
 function agileissues_story_page($story) {
   return entity_get_controller('agile_story')->view(array($story));
-}
-
-function agileissues_get_modal_form($form_id, $ajax) {
-  $args = func_get_args();
-  array_shift($args);
-  array_shift($args);
-  $form_state = array(
-    'build_info' => array(
-      'args' => $args,
-    ),
-  );
-  if ($ajax) {
-    ctools_include('ajax');
-    ctools_include('modal');
-    $form_state += array(
-      'ajax' => TRUE,
-    );
-    
-    $output = ctools_modal_form_wrapper($form_id, $form_state);
-    if (!empty($form_state['ajax_commands'])) {
-      $output = $form_state['ajax_commands'];
-    }
-    print ajax_render($output);
-    drupal_exit();
-  }
-  else {
-    return drupal_build_form($form_id, $form_state);
-  }
 }
 
 function agileissues_frontend_page() {

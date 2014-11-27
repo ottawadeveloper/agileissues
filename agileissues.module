@@ -510,6 +510,26 @@ function _agileissues_sort_note_list($a, $b) {
   return $b['#agile_date'] - $a['#agile_date'];
 }
 
+function agileissues_public_access($type, $object, $subobject) {
+  switch ($type) { 
+    case 'home':
+      return user_access('browse public agile stories') ||
+          user_access('browse public agiel tasks');
+    case 'project':
+      return user_access('browse public agile stories') ||
+          user_access('browse public agiel tasks');
+    case 'backlog':
+      return user_access('browse public agile stories');
+    case 'sprint':
+      return user_access('browse public agiel tasks');
+    case 'story':
+      return user_access('browse public agile stories');
+    case 'task':
+      return user_access('browse public agile tasks');
+  }
+  return FALSE;
+}
+
 function agileissues_backend_access() {
   return user_access('manage agile projects') ||
       user_access('manage agile sprints') ||
@@ -624,4 +644,50 @@ function agileissues_note_uri($note) {
   return array(
     'path' => '<front>',
   );
+}
+
+function agileissues_get_modal_form($form_id, $ajax) {
+  $args = func_get_args();
+  array_shift($args);
+  array_shift($args);
+  $form_state = array(
+    'build_info' => array(
+      'args' => $args,
+    ),
+  );
+  if ($ajax) {
+    ctools_include('ajax');
+    ctools_include('modal');
+    $form_state += array(
+      'ajax' => TRUE,
+    );
+    
+    $output = ctools_modal_form_wrapper($form_id, $form_state);
+    if (!empty($form_state['ajax_commands'])) {
+      $output = $form_state['ajax_commands'];
+    }
+    print ajax_render($output);
+    drupal_exit();
+  }
+  else {
+    return drupal_build_form($form_id, $form_state);
+  }
+}
+
+function agileissues_get_content($callback, $ajax) {
+  $args = func_get_args();
+  array_shift($args);
+  array_shift($args);
+  if ($ajax) {
+    ctools_include('modal');
+    $output = drupal_render(call_user_func_array($callback, $args));
+    $commands = array();
+    // If the form has not yet been rendered, render it.
+    $commands[] = ctools_modal_command_display(drupal_get_title(), $output);
+    print ajax_render($commands);
+    drupal_exit();
+  }
+  else {
+    return call_user_func_array($callback, $args);
+  }
 }

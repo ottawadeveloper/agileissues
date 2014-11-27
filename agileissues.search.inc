@@ -76,6 +76,11 @@ function agileissues_process_global_search_term(&$params, $term, $for = 'story')
       'type' => 'property',
     );
   }
+  $modules = module_implements('agile_global_search');
+  foreach ($modules as $module) {
+    $hook = $module . '_agile_global_search';
+    $hook($params, $term, $for);
+  }
 }
 
 function agileissues_process_search_filter(&$params, $conf, $value) {
@@ -445,6 +450,10 @@ function _agileissues_search_entity($entity_type, $filters) {
             $efq->propertyCondition($key, $field['value'], $field['op']);
             $any = TRUE;
             break;
+          case 'field':
+            $efq->fieldCondition($key, $field['subfield'], $field['value'], $field['op']);
+            $any = TRUE;
+            break;
         }
       }
     }
@@ -462,6 +471,9 @@ function _agileissues_search_entity($entity_type, $filters) {
         switch ($field['type']) {
           case 'property':
             $testEFQ->propertyCondition($key, $field['value'], $field['op']);
+            break;
+          case 'field':
+            $testEFQ->fieldCondition($key, $field['subfield'], $field['value'], $field['op']);
             break;
         }
         $rs = $testEFQ->execute();
