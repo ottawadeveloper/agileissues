@@ -168,6 +168,8 @@ function agileissues_project_form_submit($form, &$form_state) {
     drupal_set_message(t('Project saved successfully!'));
     foreach ($form_state['values']['backlogs'] as $id => $backlog_metadata) {
       $meta = (object) $backlog_metadata;
+      $meta->used = empty($meta->used) ? 'N' : 'Y';
+      $meta->weight = filter_var($meta->filter, FILTER_SANITIZE_NUMBER_INT);
       $meta->backlog_id = $id;
       $meta->project_id = $stub->id;
       db_merge('agileissues_project_backlog')
