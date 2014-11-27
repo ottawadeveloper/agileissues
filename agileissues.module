@@ -545,10 +545,11 @@ function agileissues_public_access($type, $object = NULL, $subobject = NULL) {
         }
       }
       else {
-        if ($subobject->privacy === 'I' && !$internal) {
+        $backlog_meta = agileissues_load_backlog_project_metadata($object, $subobject);
+        if ($backlog_meta->privacy === 'I' && !$internal) {
           return FALSE;
         }
-        if ($subobject->privacy === 'H' && !$hidden) {
+        if ($backlog_meta->privacy === 'H' && !$hidden) {
           return FALSE;
         }
       }
