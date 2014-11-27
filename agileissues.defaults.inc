@@ -162,10 +162,10 @@ function _agileissues_default_project_operations($project, $render = 'main') {
     $ops['view-public'] = l(t('Browse'), 'agile-public/project/' . $project->id);
   }
   if (agileissues_public_access('backlog', $project) && $render === 'public') {
-    $ops['view-public-backlogs'] = l(t('Backlogs'), 'agile-public/project/' . $project->id . '/backlogs');
+    $ops['view-public-backlogs'] = l(t('Backlogs'), 'agile-public/project/' . $project->id . '/backlog');
   }
   if (agileissues_public_access('sprint', $project) && $render === 'public') {
-    $ops['view-public-sprints'] = l(t('Sprints'), 'agile-public/project/' . $project->id . '/sprints');
+    $ops['view-public-sprints'] = l(t('Sprints'), 'agile-public/project/' . $project->id . '/sprint');
   }
   if (agileissues_project_access($project)) {
     $ops['view'] = l($render === 'public' ? t('Manage') : t('View'), 'agile/project/' . $project->id);
