@@ -34,8 +34,8 @@ function _agileissues_default_static_search_flags($object_type) {
     $flags['@completed'] = agileissues_construct_search_option('Alias of @closed.', 'task', 'status', 'C');
     $flags['@open'] = agileissues_construct_search_option('Only show tasks that are currently open.', 'task', 'status', 'O');
     $flags['@active'] = agileissues_construct_search_option('Alias of @open.', 'task', 'status', 'O');
-    $flags['@planned'] = agileissues_construct_search('Only show tasks that are planned for future sprints.', 'sprint', 'status', 'P');
-    $flags['@locked'] = agileissues_construct_search('Only show tasks that are about to be released.', 'sprint', 'status', 'L');
+    $flags['@planned'] = agileissues_construct_search_option('Only show tasks that are planned for future sprints.', 'sprint', 'status', 'P');
+    $flags['@locked'] = agileissues_construct_search_option('Only show tasks that are about to be released.', 'sprint', 'status', 'L');
     $flags['@current'] = agileissues_construct_search_option('Only show tasks that are currently being worked on.', 'sprint', 'status', 'O');
     $flags['@releasedsprints'] = agileissues_construct_search_option('Only show tasks from sprints that have been released.', 'sprint', 'status', 'C');
     $flags['@oldsprints'] = agileissues_construct_search_option('Only show tasks from sprints that are about to or have been released.', 'sprint', 'status', array('C', 'L'));
