@@ -108,6 +108,7 @@ function agileissues_project_form($form, &$form_state, $project = NULL) {
     '#tree' => TRUE,
   );
   $backlogs = agileissues_backlog_load_all();
+  $backlogs = agileissues_sort_backlogs_for_project($project, $backlogs, TRUE);
   foreach ($backlogs as $backlog) {
     $options[$backlog->id] = t($backlog->name);
     $meta = NULL;

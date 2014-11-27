@@ -761,17 +761,19 @@ function agileissues_get_content($callback, $ajax) {
   }
 }
 
-function agileissues_sort_backlogs_for_project($project, $backlogs) {
+function agileissues_sort_backlogs_for_project($project, $backlogs, $sortOnly = FALSE) {
   $newBacklogs = array();
   $weights = array();
   foreach ($backlogs as $backlog) {
     $meta = agileissues_load_backlog_project_metadata($project, $backlog);
-    if ($meta->used !== 'Y') {
-      continue;
-    } elseif ($meta->privacy === 'H' && !user_access('access all hidden objects')) {
-      continue;
-    } elseif ($meta->privacy === 'I' && !user_access('access internal objects')) {
-      continue;
+    if (!$sortOnly) {
+      if ($meta->used !== 'Y') {
+        continue;
+      } elseif ($meta->privacy === 'H' && !user_access('access all hidden objects')) {
+        continue;
+      } elseif ($meta->privacy === 'I' && !user_access('access internal objects')) {
+        continue;
+      }
     }
     $weights[(int) $backlog->id] = $meta->weight;
   }
