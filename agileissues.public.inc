@@ -13,7 +13,7 @@ function agileissues_public_landing_page() {
   }
   return array(
     '#theme' => 'agileissues_public_frontend',
-    '#projects' => entity_get_controller('agile_project')->view($actualProjects, 'teaser-public'),
+    '#projects' => entity_get_controller('agile_project')->view($actualProjects, 'teaser_public'),
   );
 }
 

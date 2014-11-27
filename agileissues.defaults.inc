@@ -271,6 +271,9 @@ function _agileissues_default_global_operations($render = 'main') {
   if (agileissues_frontend_access()) {
     $actions[] = l(t('Projects'), 'agile');
   }
+  if (agileissues_public_access('home')) {
+    $actions[] = l(t('Browse'), 'agile-public');
+  }
   if (agileissues_search_access()) {
     $actions[] = l(t('Search'), 'agile/search');
     $actions[] = l(t('Search Tips'), 'agile/search-tips/nojs', array('attributes' => array('class' => 'ctools-use-modal')));
