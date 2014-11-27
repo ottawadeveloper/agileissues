@@ -169,11 +169,11 @@ function agileissues_project_form_submit($form, &$form_state) {
     foreach ($form_state['values']['backlogs'] as $id => $backlog_metadata) {
       $meta = (object) $backlog_metadata;
       $meta->backlog_id = $id;
-      $meta->project_id = $stub->project_id;
+      $meta->project_id = $stub->id;
       db_merge('agileissues_project_backlog')
         ->key(array(
           'backlog_id' => $id,
-          'project_id' => $stub->project_id
+          'project_id' => $stub->id
         ))
         ->fields((array) $meta)
         ->execute();
