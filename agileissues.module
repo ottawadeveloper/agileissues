@@ -777,7 +777,7 @@ function agileissues_sort_backlogs_for_project($project, $backlogs, $sortOnly = 
     }
     $weights[(int) $backlog->id] = $meta->weight;
   }
-  ksort($weights);
+  asort($weights);
   foreach ($weights as $id => $weight) {
     $newBacklogs[$id] = $backlogs[$id];
   }
