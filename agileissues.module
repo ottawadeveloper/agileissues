@@ -510,7 +510,7 @@ function _agileissues_sort_note_list($a, $b) {
   return $b['#agile_date'] - $a['#agile_date'];
 }
 
-function agileissues_public_access($type, $object, $subobject) {
+function agileissues_public_access($type, $object = NULL, $subobject = NULL) {
   switch ($type) { 
     case 'home':
       return user_access('browse public agile stories') ||

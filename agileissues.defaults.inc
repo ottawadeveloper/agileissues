@@ -314,6 +314,21 @@ function _agileissues_default_metrics() {
 function _agileissues_default_theme_hooks($path) {
   $path .= '/templates';
   return array(
+    'agileissues_public_frontend' => array(
+      'render element' => 'frontend',
+      'template' => 'agileissues-public-frontend',
+      'path' => $path,
+    ),
+    'agileissues_public_backlog_list' => array(
+      'render element' => 'list',
+      'template' => 'agileissues-public-backlog-list',
+      'path' => $path,
+    ),
+    'agileissues_public_sprint_list' => array(
+      'render element' => 'list',
+      'template' => 'agileissues-public-sprint-list',
+      'path' => $path,
+    ),
     'agileissues_search_tips' => array(
       'render element' => 'tips',
       'template' => 'agileissues-search-tips',
@@ -1064,6 +1079,10 @@ function _agileissues_defaults_entity_info() {
         'label' => t('Public'),
         'custom settings' => FALSE,
       ),
+      'teaser-public' => array(
+        'label' => t('Public Teaser'),
+        'custom settings' => FALSE,
+      ),
     ),
   );
   $info['agile_story'] = array(
@@ -1093,6 +1112,10 @@ function _agileissues_defaults_entity_info() {
       ),
       'public' => array(
         'label' => t('Public'),
+        'custom settings' => FALSE,
+      ),
+      'teaser-public' => array(
+        'label' => t('Public Teaser'),
         'custom settings' => FALSE,
       ),
     ),
@@ -1149,6 +1172,10 @@ function _agileissues_defaults_entity_info() {
         'label' => t('Public'),
         'custom settings' => FALSE,
       ),
+      'teaser-public' => array(
+        'label' => t('Public Teaser'),
+        'custom settings' => FALSE,
+      ),
     ),
   );
   $info['agile_sprint'] = array(
@@ -1188,6 +1215,10 @@ function _agileissues_defaults_entity_info() {
     ),
     'view modes' => array(
       'full' => array(
+        'label' => t('Full'),
+        'custom settings' => FALSE,
+      ),
+      'public' => array(
         'label' => t('Full'),
         'custom settings' => FALSE,
       ),
