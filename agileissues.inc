@@ -55,7 +55,7 @@ function agileissues_construct_relationship_definition($left, $right, $leftTypes
   );
 }
 
-function agileissues_construct_search_option($table, $index, $value, $search_type = NULL, $data_type = NULL, $index_type = 'property', $strict = TRUE) {
+function agileissues_construct_search_option($description, $table, $index, $value, $search_type = NULL, $data_type = NULL, $index_type = 'property', $strict = TRUE) {
   if (empty($search_type)) {
     if ($table === 'task' || $table === 'sprint') {
       $search_type = array('task');
@@ -75,10 +75,11 @@ function agileissues_construct_search_option($table, $index, $value, $search_typ
     'type' => $index_type,
     'strict' => $strict,
     'data_type' => $data_type,
+    'description' => $description,
   );
 }
 
-function agileissues_construct_search_parameter($table, $index, $filter_function, $search_type = NULL, $data_type = NULL, $index_type = 'property', $strict = TRUE) {
+function agileissues_construct_search_parameter($description, $table, $index, $filter_function, $search_type = NULL, $data_type = NULL, $index_type = 'property', $strict = TRUE) {
   if (empty($search_type)) {
     if ($table === 'task') {
       $search_type = array('task');
@@ -98,6 +99,7 @@ function agileissues_construct_search_parameter($table, $index, $filter_function
     'type' => $index_type,
     'strict' => $strict,
     'data_type' => $data_type,
+    'description' => $description,
   );
 }
 

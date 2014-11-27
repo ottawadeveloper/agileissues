@@ -1,5 +1,15 @@
 <?php
 
+function agileissues_search_tips_page() {
+  module_load_include('search.inc', 'agileissues');
+  $tips = array(
+    '#theme' => 'agileissues_search_tips',
+    '#story' => _agileissues_build_search_vector_tips('story'),
+    '#tasks' => _agileissues_build_search_vector_tips('task'),
+  );
+  return $tips;
+}
+
 
 function agileissues_search_form($form, &$form_state, $searchFor = NULL, $searchIn = 'story') {
   $for = isset($form_state['values']['search']) ? $form_state['values']['search'] : $searchFor;

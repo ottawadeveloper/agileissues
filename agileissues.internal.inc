@@ -1,14 +1,15 @@
 <?php
 
 function _agileissues_get_search_vectors() {
+  global $language;
   $cached = &drupal_static(__FUNCTION__, array());
-  if (empty($cached)) {
+  if (empty($cached[$language->language])) {
     $fromCache = cache_get(__FUNCTION__);
     if (!empty($fromCache->data)) {
       $cached = $fromCache->data;
     }
-    if (empty($cached)) {
-      $cached = array(
+    if (empty($cached[$language->language])) {
+      $cached[$language->language] = array(
         'story' => _agileissues_build_static_search_vectors('story'),
         'task' => _agileissues_build_static_search_vectors('task'),
       );
@@ -16,10 +17,10 @@ function _agileissues_get_search_vectors() {
     }
     // dynamic ones are more sensitive to user-based context, so we use
     // static caching but not DB/memcache.
-    _agileissues_build_dynamic_search_vectors($cached['story'], 'story');
-    _agileissues_build_dynamic_search_vectors($cached['task'], 'task');
+    _agileissues_build_dynamic_search_vectors($cached[$language->language]['story'], 'story');
+    _agileissues_build_dynamic_search_vectors($cached[$language->language]['task'], 'task');
   }
-  return $cached;
+  return $cached[$language->language];
 }
 
 function _agileissues_build_static_search_vectors($for_type) {

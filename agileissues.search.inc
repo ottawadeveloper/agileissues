@@ -1,5 +1,14 @@
 <?php
 
+function _agileissues_build_search_vector_tips($for_type) {
+  $vectors = agileissues_search_vectors($for_type);
+  $tips = array();
+  foreach ($vectors as $vector => $info) {
+    $tips[$vector] = $info['description'];
+  }
+  return $tips;
+}
+
 function agileissues_build_search_parameters($string, array $set = array(), $for = 'story') {
   $params = array(
     'story' => array(
@@ -74,7 +83,14 @@ function agileissues_process_search_filter(&$params, $conf, $value) {
     $value = $conf['value'];
   }
   if (!empty($conf['sanitize'])) {
-    $value = filter_var($value, $conf['sanitize']);
+    if (is_callable($conf['sanitize'])) {
+      $args = isset($conf['sanitize arguments']) ? $conf['sanitize arguments'] : array();
+      array_unshift($args, $value);
+      $value = call_user_func($conf['sanitize'], $args);
+    }
+    else {
+      $value = filter_var($value, $conf['sanitize']);
+    }
   }
   if (empty($conf['data_type'])) {
     $conf['data_type'] = AGILE_SEARCH_DATA_TYPE_EXACT;
@@ -151,6 +167,25 @@ function agileissues_process_search_filter(&$params, $conf, $value) {
         'strict' => $conf['strict'],
       );
       break;
+    case AGILE_SEARCH_DATA_TYPE_NOT:
+      if (is_array($value)) {
+        $params[$conf['object']][$conf['property']][] = array(
+          'value' => $value,
+          'type' => $conf['type'],
+          'strict' => $conf['strict'],
+          'op' => 'NOT IN',
+        );
+        break;
+      }
+      else {
+        $params[$conf['object']][$conf['property']][] = array(
+          'value' => $value,
+          'type' => $conf['type'],
+          'strict' => $conf['strict'],
+          'op' => '!=',
+        );
+        break;
+      }
     case AGILE_SEARCH_DATA_TYPE_EXACT:
     default:
       $params[$conf['object']][$conf['property']][] = array(
