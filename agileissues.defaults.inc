@@ -264,6 +264,7 @@ function _agileissues_default_global_operations($render = 'main') {
   }
   if (agileissues_search_access()) {
     $actions[] = l(t('Search'), 'agile/search');
+    $actions[] = l(t('Search Tips'), 'agile/search-tips/nojs', array('attributes' => array('class' => 'ctools-use-modal')));
   }
   if (user_access('open new agile stories')) {
     $actions[] = l(t('New Story'), 'agile/open-request/nojs', array('attributes' => array('class' => 'ctools-use-modal')));
