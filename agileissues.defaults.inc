@@ -27,6 +27,18 @@ function _agileissues_default_static_search_flags($object_type) {
   $flags['@backlogid'] = agileissues_construct_search_parameter('backlog', 'id', FILTER_SANITIZE_NUMBER_INT);
   $flags['@projectid'] = agileissues_construct_search_parameter('project', 'id', FILTER_SANITIZE_NUMBER_INT);
   $flags['@taskid'] = agileissues_construct_search_parameter('task', 'id', FILTER_SANITIZE_NUMBER_INT);
+  if ($object_type === 'task') {
+    $flags['@closed'] = agileissues_construct_search_option('task', 'status', 'C');
+    $flags['@open'] = agileissues_construct_search_option('task', 'status', 'O');
+    $flags['@active'] = agileissues_construct_search_option('task', 'status', 'O');
+    $flags['@current'] = agileissues_construct_search_option('sprint', 'status', 'O');
+  }
+  else {
+    $flags['@closed'] = agileissues_construct_search_option('story', 'status', 'C');
+    $flags['@completed'] = agileissues_construct_search_option('story', 'status', 'C');
+    $flags['@active'] = agileissues_construct_search_option('story', 'status', 'A');
+    $flags['@open'] = agileissues_construct_search_option('story', 'status', 'A');
+  }
   return $flags;
 }
 
@@ -42,9 +54,6 @@ function _agileissues_default_dynamic_search_flags($object_type) {
   }
   else {
     $flags['@mine'] = agileissues_construct_search_option('task', 'uid', $user->uid);
-    $flags['@closed'] = agileissues_construct_search_option('task', 'status', 'C');
-    $flags['@opened'] = agileissues_construct_search_option('task', 'status', 'O');
-    $flags['@current'] = agileissues_construct_search_option('sprint', 'status', 'O');
   }
   return $flags;
 }
@@ -1078,3 +1087,4 @@ function _agileissues_defaults_entity_info() {
   );
   return $info;
 }
+

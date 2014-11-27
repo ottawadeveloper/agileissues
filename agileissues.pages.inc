@@ -738,7 +738,6 @@ function agileissues_task_form($form, &$form_state, $task = NULL, $story = NULL)
     $form['change_note'] = array(
       '#type' => 'textarea',
       '#title' => t('Change Note'),
-      '#required' => TRUE,
       '#weight' => 9999,
     );
   }
