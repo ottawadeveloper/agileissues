@@ -216,6 +216,14 @@ function agileissues_sprint_type_exists($name) {
 }
 
 
+function agileissues_load_backlog_project_metadata($project, $backlog) {
+  return db_select('agileissues_project_backlog', 'apb')
+    ->condition('backlog_id', $backlog->id)
+    ->condition('project_id', $project->id)
+    ->fields('apb')
+    ->execute()->fetchObject();
+}
+
 function agileissues_task_load($task_id) {
   $controller = entity_get_controller('agile_task');
   $entities = $controller->load(array($task_id));

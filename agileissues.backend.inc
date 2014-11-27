@@ -94,10 +94,47 @@ function agileissues_project_form($form, &$form_state, $project = NULL) {
     '#type' => 'value',
     '#value' => $project->type,
   );
-  $options = array();
+  $form['backlogs'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Backlog Settings'),
+    '#weight' => 500,
+    '#tree' => TRUE,
+  );
+  module_load_include('internal.inc', 'agileissues');
   $backlogs = agileissues_backlog_load_all();
   foreach ($backlogs as $backlog) {
     $options[$backlog->id] = t($backlog->name);
+    $meta = (object) array(
+      'used' => 'Y',
+      'weight' => 0,
+      'privacy' => 'P',
+    );
+    if (!empty($project->id)) {
+      $meta = agileissues_load_backlog_project_metadata($project, $backlog);
+    }
+    $form['backlogs'][$backlog->id] = array(
+      '#type' => 'fieldset',
+      '#collapsible' => TRUE,
+      '#collapsed' => TRUE,
+      '#title' => t($backlog->name),
+      'used' => array(
+        '#type' => 'checkbox',
+        '#title' => t('Use this backlog as part of this project'),
+        '#default_value' => $meta->used === 'Y' ? TRUE : FALSE,
+      ),
+      'weight' => array(
+        '#type' => 'textfield',
+        '#title' => t('Weight'),
+        '#default_value' => $meta->weight,
+      ),
+      'privacy' => array(
+        '#type' => 'options',
+        '#title' => t('Privacy'),
+        '#default_value' => $meta->privacy,
+        '#required' => TRUE,
+        '#options' => _agileissues_get_privacy_options(),
+      ),
+    );
   }
   $form['default_backlog'] = array(
       '#type' => 'select',
@@ -126,6 +163,18 @@ function agileissues_project_form_submit($form, &$form_state) {
   field_attach_submit('agile_project', $stub, $form, $form_state);
   if (agileissues_project_save($stub)) {
     drupal_set_message(t('Project saved successfully!'));
+    foreach ($form_state['values']['backlogs'] as $id => $backlog_metadata) {
+      $meta = (object) $backlog_metadata;
+      $meta->backlog_id = $id;
+      $meta->project_id = $stub->project_id;
+      db_merge('agileissues_project_backlog')
+        ->key(array(
+          'backlog_id' => $id,
+          'project_id' => $stub->project_id
+        ))
+        ->fields((array) $meta)
+        ->execute();
+    }
     $form_state['redirect'] = 'admin/content/agile/project';
   }
   else {
