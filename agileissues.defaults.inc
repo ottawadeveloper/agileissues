@@ -158,6 +158,15 @@ function _agileissues_default_project_operations($project, $render = 'main') {
   ctools_include('modal');
   ctools_modal_add_js();
   $ops = array();
+  if (agileissues_public_access('project', $project) && $render === 'public') {
+    $ops['view-public'] = l(t('Browse'), 'agile-public/project/' . $project->id);
+  }
+  if (agileissues_public_access('backlog', $project) && $render === 'public') {
+    $ops['view-public-backlogs'] = l(t('Backlogs'), 'agile-public/project/' . $project->id . '/backlogs');
+  }
+  if (agileissues_public_access('sprint', $project) && $render === 'public') {
+    $ops['view-public-sprints'] = l(t('Sprints'), 'agile-public/project/' . $project->id . '/sprints');
+  }
   if (agileissues_project_access($project)) {
     $ops['view'] = l(t('View'), 'agile/project/' . $project->id);
   }

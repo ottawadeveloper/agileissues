@@ -554,6 +554,9 @@ function agileissues_search_access() {
       return TRUE;
     }
   }
+  if (agileissues_public_access('home')) {
+    return TRUE;
+  }
   return FALSE;
 }
 
