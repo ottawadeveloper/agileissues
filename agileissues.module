@@ -781,3 +781,26 @@ function agileissues_sort_backlogs_for_project($project, $backlogs) {
   }
   return $newBacklogs;
 }
+
+  function agileissues_filter_entities($type, $entities, $mode) {
+    if ($type === 'agile_story') { $type = 'story'; }
+    if ($type === 'agile_task') { $type = 'task'; }
+    $filtered = array();
+    foreach ($entities as $id => $entity) {
+      $valid = FALSE;
+      if ($mode === 'teaser' && $type === 'story') {
+        $valid = agileissues_story_access('view', $entity);
+      }
+      elseif ($mode === 'teaser' && $type === 'task') {
+        $valid = agileissues_task_access('view', $entity);
+      }
+      else {
+        $valid = agileissues_public_access($type, $entity);
+      }
+      if ($valid) {
+        $filtered[$id] = $entity;
+      }
+    }
+    return $filtered;
+  }
+
