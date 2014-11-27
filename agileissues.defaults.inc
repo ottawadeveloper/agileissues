@@ -236,7 +236,7 @@ function _agileissues_default_story_operations($story, $render = 'main') {
   return $ops;
 }
 
-function _agileissues_default_task_operations($task, $mode = 'main') {
+function _agileissues_default_task_operations($task, $render = 'main') {
   ctools_include('ajax');
   ctools_include('modal');
   ctools_modal_add_js();
