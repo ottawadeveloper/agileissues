@@ -550,6 +550,7 @@ function agileissues_manage_stories_form($form, &$form_state, $project, $backlog
   
   $form['#theme'] = 'agileissues_manage_stories_form';
   $form['stories'] = array();
+  $delta = 2 * count($stories);
   foreach ($stories as $id) {
     $story = agileissues_story_load($id);
     $story_render = entity_get_controller('agile_story')->view(array($id => $story), 'teaser');
@@ -559,7 +560,7 @@ function agileissues_manage_stories_form($form, &$form_state, $project, $backlog
         '#title' => t('Weight'),
         '#title_display' => 'invisible',
         '#default_value' => $story->weight,
-        '#delta' => 10,
+        '#delta' => $delta,
       ),
       'render' => array(
         '#type' => 'markup',
