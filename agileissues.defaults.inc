@@ -1088,7 +1088,7 @@ function _agileissues_defaults_entity_info() {
         'label' => t('Public'),
         'custom settings' => FALSE,
       ),
-      'teaser-public' => array(
+      'teaser_public' => array(
         'label' => t('Public Teaser'),
         'custom settings' => FALSE,
       ),
@@ -1123,7 +1123,7 @@ function _agileissues_defaults_entity_info() {
         'label' => t('Public'),
         'custom settings' => FALSE,
       ),
-      'teaser-public' => array(
+      'teaser_public' => array(
         'label' => t('Public Teaser'),
         'custom settings' => FALSE,
       ),
@@ -1181,7 +1181,7 @@ function _agileissues_defaults_entity_info() {
         'label' => t('Public'),
         'custom settings' => FALSE,
       ),
-      'teaser-public' => array(
+      'teaser_public' => array(
         'label' => t('Public Teaser'),
         'custom settings' => FALSE,
       ),
