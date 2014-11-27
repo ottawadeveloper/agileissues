@@ -46,7 +46,7 @@ function agileissues_backlog_landing_page($project, $backlog = NULL) {
   if (!empty($backlog)) {
     $name = t($backlog->name);
   }
-  drupal_set_title($name);
+  drupal_set_title(t($project->name) . ' - ' . $name);
   return array(
     '#theme' => 'agileissues_public_backlog_list',
     '#backlog' => $backlog,
@@ -62,7 +62,7 @@ function agileissues_sprint_landing_page($project, $sprint = NULL) {
   if (!empty($sprint)) {
     $name = t($sprint->name);
   }
-  drupal_set_title($name);
+  drupal_set_title(t($project->name) . ' - ' . $name);
   return array(
     '#theme' => 'agileissues_public_sprint_list',
     '#sprint' => $sprint,
