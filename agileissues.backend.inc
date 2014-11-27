@@ -104,13 +104,16 @@ function agileissues_project_form($form, &$form_state, $project = NULL) {
   $backlogs = agileissues_backlog_load_all();
   foreach ($backlogs as $backlog) {
     $options[$backlog->id] = t($backlog->name);
-    $meta = (object) array(
-      'used' => 'Y',
-      'weight' => 0,
-      'privacy' => 'P',
-    );
+    $meta = NULL;
     if (!empty($project->id)) {
       $meta = agileissues_load_backlog_project_metadata($project, $backlog);
+    }
+    if (empty($meta)) {
+      $meta = (object) array(
+        'used' => 'Y',
+        'weight' => 0,
+        'privacy' => 'P',
+      );
     }
     $form['backlogs'][$backlog->id] = array(
       '#type' => 'fieldset',
@@ -128,7 +131,7 @@ function agileissues_project_form($form, &$form_state, $project = NULL) {
         '#default_value' => $meta->weight,
       ),
       'privacy' => array(
-        '#type' => 'options',
+        '#type' => 'select',
         '#title' => t('Privacy'),
         '#default_value' => $meta->privacy,
         '#required' => TRUE,
