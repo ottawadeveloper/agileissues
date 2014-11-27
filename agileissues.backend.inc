@@ -82,6 +82,13 @@ function agileissues_project_form($form, &$form_state, $project = NULL) {
     '#default_value' => $project->name,
     '#required' => TRUE,
   );
+  module_load_include('internal.inc', 'agileissues');
+  $form['privacy'] = array(
+    '#type' => 'select',
+    '#title' => t('Privacy'),
+    '#options' => _agileissues_get_privacy_options(),
+    '#default_value' => $project->privacy,
+  );
   $form['id'] = array(
     '#type' => 'value',
     '#value' => $project->id,
@@ -100,7 +107,6 @@ function agileissues_project_form($form, &$form_state, $project = NULL) {
     '#weight' => 500,
     '#tree' => TRUE,
   );
-  module_load_include('internal.inc', 'agileissues');
   $backlogs = agileissues_backlog_load_all();
   foreach ($backlogs as $backlog) {
     $options[$backlog->id] = t($backlog->name);
@@ -189,7 +195,7 @@ function agileissues_project_form_submit($form, &$form_state) {
 }
 
 function agileissues_build_project_from_form(&$form_state) {
-  $loadKeys = array('name', 'created', 'type', 'id', 'default_backlog');
+  $loadKeys = array('name', 'created', 'type', 'id', 'default_backlog', 'privacy');
   $values = array();
   foreach ($loadKeys as $key) {
     $values[$key] = $form_state['values'][$key];
@@ -467,6 +473,7 @@ function agileissues_sprint_form($form, &$form_state, $sprint = NULL) {
       'end_date' => time() + (3600 * 24 * 14),
       'name' => '',
       'status' => 'P',
+      'privacy' => 'P',
       'type' => isset($form_state['values']) && isset($form_state['values']['type']) ? $form_state['values']['type'] : NULL,
     );
   }
@@ -539,6 +546,13 @@ function agileissues_sprint_form($form, &$form_state, $sprint = NULL) {
     '#required' => TRUE,
     '#options' => _agileissues_get_sprint_status_codes(),
   );
+  module_load_include('internal.inc', 'agileissues');
+  $form['privacy'] = array(
+    '#type' => 'select',
+    '#title' => t('Privacy'),
+    '#options' => _agileissues_get_privacy_options(),
+    '#default_value' => $project->privacy,
+  );
   field_attach_form('agile_sprint', $sprint, $form, $form_state);
   $form['submit'] = array(
     '#type' => 'submit',
@@ -567,7 +581,7 @@ function agileissues_sprint_form_submit($form, &$form_state) {
 }
 
 function agileissues_build_sprint_from_form(&$form_state) {
-  $loadKeys = array('name', 'created', 'type', 'id', 'project_id', 'start_date', 'end_date', 'status');
+  $loadKeys = array('name', 'created', 'type', 'id', 'project_id', 'start_date', 'end_date', 'status', 'privacy');
   $values = array();
   foreach ($loadKeys as $key) {
     $values[$key] = $form_state['values'][$key];

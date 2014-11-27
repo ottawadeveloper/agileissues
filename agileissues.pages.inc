@@ -107,6 +107,7 @@ function agileissues_story_form($form, &$form_state, $story = NULL, $project = N
       'reporting_uid' => $user->uid,
       'status' => 'A',
       'sprint_id' => 0,
+      'privacy' => 'P',
     );
   }
   if (empty($story->type)) {
@@ -153,6 +154,7 @@ function agileissues_story_form($form, &$form_state, $story = NULL, $project = N
       ->condition('project_id', $story->project_id)
       ->execute()->fetchAllKeyed(0, 1);
   }
+  module_load_include('internal.inc', 'agileissues');
   $form += array(
     'backlog_id' => array(
       '#type' => 'select',
@@ -216,6 +218,13 @@ function agileissues_story_form($form, &$form_state, $story = NULL, $project = N
       '#empty_option' => t('Unknown'),
       '#default_value' => $story->story_points,
       '#weight' => -25,
+    ),
+    'privacy' => array(
+      '#type' => 'select',
+      '#title' => t('Privacy'),
+      '#access' => user_access('manage internal story data'),
+      '#options' => _agileissues_get_privacy_options(),
+      '#default_value' => $story->privacy,
     ),
   );
   $form['title'] = array(
@@ -297,7 +306,7 @@ function agileissues_story_form_validate($form, &$form_state) {
 }
 
 function agileissues_story_build_from_form($form_state) {
-  $properties = array('id', 'created', 'title', 'backlog_id', 'project_id', 'type', 'weight', 'reporting_uid', 'primary_uid', 'story_points', 'status', 'sprint_id');
+  $properties = array('id', 'created', 'title', 'backlog_id', 'project_id', 'type', 'weight', 'reporting_uid', 'primary_uid', 'story_points', 'status', 'sprint_id', 'privacy');
   $stub_values = array();
   foreach ($properties as $key) {
     $stub_values[$key] = $form_state['values'][$key];
@@ -332,6 +341,7 @@ function agileissues_story_form_submit($form, &$form_state) {
         'updated' => time(),
         'uid' => $user->uid,
         'time_spent' => 0,
+        'privacy' => 'P',
       );
       agileissues_save_note($note);
     }
@@ -395,6 +405,7 @@ function agileissues_story_move_form_submit($form, &$form_state) {
         'updated' => time(),
         'uid' => $user->uid,
         'time_spent' => 0,
+        'privacy' => 'P',
       );
       agileissues_save_note($note);
     }
@@ -437,6 +448,14 @@ function agileissues_note_form($form, &$form_state, $type, $object) {
     '#title' => t('Mark this task as completed.'),
     '#access' => $type === 'task',
   );
+  module_load_include('internal.inc', 'agileissues');
+  $form['privacy'] = array(
+    '#type' => 'select',
+    '#title' => t('Privacy'),
+    '#options' => _agileissues_get_privacy_options(),
+    '#default_value' => 'P',
+    '#access' => user_access('change note privacy'),
+  );
   if ($type === 'task') {
     $form['close_story'] = array(
       '#type' => 'checkbox',
@@ -469,7 +488,7 @@ function agileissues_note_form_validate($form, &$form_state) {
 
 function agileissues_note_form_submit($form, &$form_state) {
   global $user;
-  $fields = array('entity_type', 'entity_id', 'title', 'note_text', 'time_spent');
+  $fields = array('entity_type', 'entity_id', 'title', 'note_text', 'time_spent', 'privacy');
   $stub = array(
     'created' => time(),
     'updated' => time(),
@@ -590,6 +609,7 @@ function agileissues_task_form($form, &$form_state, $task = NULL, $story = NULL)
       'status' => 'O',
       'created' => 0,
       'id' => 0,
+      'privacy' => 'P',
     );
   }
   if (empty($task->type)) {
@@ -704,6 +724,14 @@ function agileissues_task_form($form, &$form_state, $task = NULL, $story = NULL)
     '#required' => TRUE,
     '#default_value' => $task->status,
   );
+  module_load_include('internal.inc', 'agileissues');
+  $form['privacy'] = array(
+    '#type' => 'select',
+    '#title' => t('Privacy'),
+    '#access' => user_access('manage internal task data'),
+    '#options' => _agileissues_get_privacy_options(),
+    '#default_value' => $task->privacy,
+  );
   field_attach_form('agile_task', $task, $form, $form_state);
   if (!empty($task->id)) {
     $form['change_note'] = array(
@@ -722,7 +750,7 @@ function agileissues_task_form($form, &$form_state, $task = NULL, $story = NULL)
 
 function agileissues_task_form_submit($form, &$form_state) {
   global $user;
-  $keys = array('title', 'id', 'weight', 'uid', 'created', 'type', 'story_id', 'sprint_id', 'uid', 'estimated_time', 'status', 'creator');
+  $keys = array('title', 'id', 'weight', 'uid', 'created', 'type', 'story_id', 'sprint_id', 'uid', 'estimated_time', 'status', 'creator', 'privacy');
   $stub = array();
   foreach ($keys as $key) {
     $stub[$key] = $form_state['values'][$key];

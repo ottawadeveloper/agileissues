@@ -519,20 +519,77 @@ function _agileissues_sort_note_list($a, $b) {
 }
 
 function agileissues_public_access($type, $object = NULL, $subobject = NULL) {
+  global $user;
+  $hidden = user_access('access all hidden objects');
+  $internal = user_access('access internal objects');
   switch ($type) { 
     case 'home':
       return user_access('browse public agile stories') ||
           user_access('browse public agile tasks');
     case 'project':
+      if ($object->privacy === 'I' && !$internal) {
+        return FALSE;
+      }
+      if ($object->privacy === 'H' && !$hidden) {
+        return FALSE;
+      }
       return user_access('browse public agile stories') ||
           user_access('browse public agile tasks');
     case 'backlog':
+      if (empty($subobject)) {
+        if ($object->privacy === 'I' && !$internal) {
+          return FALSE;
+        }
+        if ($object->privacy === 'H' && !$hidden) {
+          return FALSE;
+        }
+      }
+      else {
+        if ($subobject->privacy === 'I' && !$internal) {
+          return FALSE;
+        }
+        if ($subobject->privacy === 'H' && !$hidden) {
+          return FALSE;
+        }
+      }
       return user_access('browse public agile stories');
     case 'sprint':
+      if (empty($subobject)) {
+        if ($object->privacy === 'I' && !$internal) {
+          return FALSE;
+        }
+        if ($object->privacy === 'H' && !$hidden) {
+          return FALSE;
+        }
+      }
+      else {
+        if ($subobject->privacy === 'I' && !$internal) {
+          return FALSE;
+        }
+        if ($subobject->privacy === 'H' && !$hidden) {
+          return FALSE;
+        }
+      }
       return user_access('browse public agile tasks');
     case 'story':
+      if ($object->reporting_uid == $user->uid) { $hidden = TRUE; $internal = TRUE; }
+      if ($object->primary_uid === $user->uid) { $hidden = TRUE; $internal = TRUE; }
+      if ($object->privacy === 'I' && !$internal) {
+        return FALSE;
+      }
+      if ($object->privacy === 'H' && !$hidden) {
+        return FALSE;
+      }
       return user_access('browse public agile stories');
     case 'task':
+      if ($object->reporting_uid == $user->uid) { $hidden = TRUE; $internal = TRUE; }
+      if ($object->primary_uid === $user->uid) { $hidden = TRUE; $internal = TRUE; }
+      if ($object->privacy === 'I' && !$internal) {
+        return FALSE;
+      }
+      if ($object->privacy === 'H' && !$hidden) {
+        return FALSE;
+      }
       return user_access('browse public agile tasks');
   }
   return FALSE;
@@ -701,4 +758,25 @@ function agileissues_get_content($callback, $ajax) {
   else {
     return call_user_func_array($callback, $args);
   }
+}
+
+function agileissues_sort_backlogs_for_project($project, $backlogs) {
+  $newBacklogs = array();
+  $weights = array();
+  foreach ($backlogs as $backlog) {
+    $meta = agileissues_load_backlog_project_metadata($project, $backlog);
+    if ($meta->used !== 'Y') {
+      continue;
+    } elseif ($meta->privacy === 'H' && !user_access('access all hidden objects')) {
+      continue;
+    } elseif ($meta->privacy === 'I' && !user_access('access internal objects')) {
+      continue;
+    }
+    $weights[(int) $backlog->id] = $meta->weight;
+  }
+  ksort($weights);
+  foreach ($weights as $id => $weight) {
+    $newBacklogs[$id] = $backlogs[$id];
+  }
+  return $newBacklogs;
 }

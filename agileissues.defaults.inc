@@ -449,6 +449,12 @@ function _agileissues_default_theme_hooks($path) {
 
 function _agileissues_default_permissions() {
   return array(
+    'access internal objects' => array(
+      'title' => t('View all internal objects'),
+    ),
+    'access all hidden objects' => array(
+      'title' => t('Access all hidden objects, regardless of owner.'),
+    ),
     'browse public agile stories' => array(
       'title' => t('Browse the public list of stories'),
     ),
@@ -532,6 +538,9 @@ function _agileissues_default_permissions() {
     ),
     'view agile statistics' => array(
       'title' => t('View agile statistics'),
+    ),
+    'change note privacy' => array(
+      'title' => t('Change note privacy'),
     ),
   );
 }
