@@ -521,7 +521,7 @@ function agileissues_public_access($type, $object = NULL, $subobject = NULL) {
     case 'backlog':
       return user_access('browse public agile stories');
     case 'sprint':
-      return user_access('browse public agiel tasks');
+      return user_access('browse public agile tasks');
     case 'story':
       return user_access('browse public agile stories');
     case 'task':
