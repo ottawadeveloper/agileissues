@@ -4,14 +4,21 @@
 function agileissues_search_form($form, &$form_state, $searchFor = NULL, $searchIn = 'story') {
   $for = isset($form_state['values']['search']) ? $form_state['values']['search'] : $searchFor;
   $in = isset($form_state['values']['search-for']) ? $form_state['values']['search-for'] : $searchIn;
+  if ($in === 'story') {
+    drupal_set_title(t('Search stories'));
+  }
+  else {
+    drupal_set_title(t('Search tasks'));
+  }
+  $form['#theme'] = 'agileissues_search';
   $form['search'] = array(
     '#default_value' => $searchFor,
-    '#title' => t('Query'),
+    '#title' => t('Search'),
     '#type' => 'textfield',
   );
   $form['search-for'] = array(
     '#type' => 'select',
-    '#title' => t('Search in'),
+    '#title' => t('Search for'),
     '#options' => array(
       'story' => t('Stories'),
       'task' => T('Tasks'),

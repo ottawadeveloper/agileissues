@@ -382,7 +382,7 @@ function _agileissues_default_theme_hooks($path) {
     ),
     'agileissues_search_form' => array(
       'render element' => 'form',
-      'template' => 'agileissues-search',
+      'template' => 'agileissues-search-form',
       'path' => $path,
     ),
     'agileissues_search_results' => array(
