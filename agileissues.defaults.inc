@@ -91,6 +91,7 @@ function _agileissues_default_task_changelog_processors() {
   $processors['sprint-id'] = agileissues_construct_changelog_processor(t('Sprint'), 'sprint_id', '_agileissues_sprint_name');
   $processors['uid'] = agileissues_construct_changelog_processor(t('Assignee'), 'uid', '_agileissues_user_name');
   $processors['estimated_time'] = agileissues_construct_changelog_processor(t('Estimated Time'), 'estimated_time', '_agileissues_format_time');
+  $processors['privacy'] = agileissues_construct_changelog_processors(t('Privacy'), 'privacy', '_agileissues_get_privacy_name');
   $processors += _agileissues_default_field_processors('agile_task');
   return $processors;
 }
@@ -104,6 +105,7 @@ function _agileissues_default_story_changelog_processors() {
   $processors['story-points'] = agileissues_construct_changelog_processor(t('Story Size'), 'story_points', '_agileissues_story_size_name');
   $processors['status'] = agileissues_construct_changelog_processor(t('Status'), 'status', '_agileissues_get_story_status_name');
   $processors['sprint-id'] = agileissues_construct_changelog_processor(t('Completed'), 'sprint_id', '_agileissues_story_sprint_name');
+  $processors['privacy'] = agileissues_construct_changelog_processors(t('Privacy'), 'privacy', '_agileissues_get_privacy_name');
   $processors += _agileissues_default_field_processors('agile_story');
   return $processors;
 }
@@ -241,7 +243,7 @@ function _agileissues_default_task_operations($task, $render = 'main') {
   ctools_include('modal');
   ctools_modal_add_js();
   $ops = array();
-  if ($render ==='public' && agileissues_public_access('task', $task)) {
+  if ($render === 'public' && agileissues_public_access('task', $task)) {
     $ops[] = l(t('View'), 'agile-public/task/' . $task->id . '/nojs', array('attributes' => array('class' => 'ctools-use-modal')));
   }
   elseif (agileissues_task_access('view', $task)) {

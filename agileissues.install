@@ -82,6 +82,33 @@ function agileissues_update_7103() {
 }
 
 /**
+ * Support for privacy settings.
+ */
+function agileissues_update_7104() {
+  $field = array(
+    'type' => 'char',
+    'length' => 1,
+    'not null' => TRUE,
+    'initial' => 'P',
+  );
+  if (!db_field_exists('agileissues_tasks', 'privacy')) {
+    db_add_field('agileissues_tasks', 'privacy', $field);
+  }
+  if (!db_field_exists('agileissues_stories', 'privacy')) {
+    db_add_field('agileissues_stories', 'privacy', $field);
+  }
+  if (!db_field_exists('agileissues_sprints', 'privacy')) {
+    db_add_field('agileissues_sprints', 'privacy', $field);
+  }
+  if (!db_field_exists('agileissues_notes', 'privacy')) {
+    db_add_field('agileissues_notes', 'privacy', $field);
+  }
+  if (!db_field_exists('agileissues_projects', 'privacy')) {
+    db_add_field('agileissues_projects', 'privacy', $field);
+  }
+}
+
+/**
  * Table definition for agileissues_relationships
  */
 function _agileissues_schema_relationships() {
@@ -385,6 +412,11 @@ function _agileissues_schema_notes() {
         'type' => 'text',
         'size' => 'normal',
       ),
+      'privacy' => array(
+        'type' => 'char',
+        'length' => 1,
+        'not null' => TRUE,
+      ),
     ),
     'primary key' => array(
       'id',
@@ -469,6 +501,11 @@ function _agileissues_schema_tasks() {
         'not null' => TRUE,
       ),
       'status' => array(
+        'type' => 'char',
+        'length' => 1,
+        'not null' => TRUE,
+      ),
+      'privacy' => array(
         'type' => 'char',
         'length' => 1,
         'not null' => TRUE,
@@ -574,6 +611,11 @@ function _agileissues_schema_stories() {
         'unsigned' => TRUE,
         'not null' => FALSE,
       ),
+      'privacy' => array(
+        'type' => 'char',
+        'length' => 1,
+        'not null' => TRUE,
+      ),
     ),
     'primary key' => array(
       'id',
@@ -626,6 +668,11 @@ function _agileissues_schema_projects() {
         'not null' => TRUE,
         'serialize' => FALSE,
         'binary' => FALSE,
+      ),
+      'privacy' => array(
+        'type' => 'char',
+        'length' => 1,
+        'not null' => TRUE,
       ),
     ),
     'primary key' => array(
@@ -740,6 +787,11 @@ function _agileissues_schema_sprints() {
         'binary' => FALSE,
       ),
       'status' => array(
+        'type' => 'char',
+        'length' => 1,
+        'not null' => TRUE,
+      ),
+      'privacy' => array(
         'type' => 'char',
         'length' => 1,
         'not null' => TRUE,

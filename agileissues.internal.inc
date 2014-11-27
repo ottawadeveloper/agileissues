@@ -1,5 +1,20 @@
 <?php
 
+function _agileissues_get_privacy_options() {
+  return array(
+    'P' => t('Public'),
+    'I' => t('Internal'),
+    'H' => t('Hidden'),
+  );
+}
+
+function _agileissues_get_privacy_name($code) {
+  $privacy = _agileissues_get_privacy_options();
+  if (isset($privacy[$code])) {
+    return $privacy[$code];
+  }
+}
+
 function _agileissues_get_search_vectors() {
   global $language;
   $cached = &drupal_static(__FUNCTION__, array());
