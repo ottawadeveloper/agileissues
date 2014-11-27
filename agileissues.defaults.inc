@@ -18,18 +18,19 @@ function _agileissues_default_static_search_flags($object_type) {
   $flags['@noproject'] = agileissues_construct_search_option('Limit the results to stories that have no project.', 'story', 'project_id', 0);
   $flags['@nousp'] = agileissues_construct_search_option('Limit the results to stories with an empty story size.', 'story', 'story_points', 0);
   $flags['@unowned'] = agileissues_construct_search_option('Limit the results to stories without an internal contact.', 'story', 'primary_uid', 0, 'story');
-  $flags['@unassigned'] = agileissues_construct_search_option('Limit the results to tasks which have not yet been assigned to a person.', 'task', 'uid', 0);
-  $flags['@unscheduled'] = agileissues_construct_search_option('Limit the results to tasks which have not yet been assigned to a sprint.', 'task', 'sprint_id', 0);
   $flags['@nobacklog'] = agileissues_construct_search_option('Limit the results to stories which have not yet been assigned to a backlog.', 'story', 'backlog_id', 0);
-  $flags['@nostory'] = agileissues_construct_search_option('Limit the results to tasks that have no story.', 'task', 'story_id', 0);
   $flags['@storyid'] = agileissues_construct_search_parameter('Only show stories that match the given ID (eg @storyid=1).', 'story', 'id', FILTER_SANITIZE_NUMBER_INT);
   $flags['@backlogid'] = agileissues_construct_search_parameter('Only show stories that have been assigned to the given backlog (eg @backlogid=1).', 'backlog', 'id', FILTER_SANITIZE_NUMBER_INT);
   $flags['@backlog'] = agileissues_construct_search_parameter('Show stories that have been assigned to the given backlog (eg @backlog=Active).', 'backlog', 'name', 'check_plain', NULL, AGILE_SEARCH_DATA_TYPE_LIKE);
   $flags['@projectid'] = agileissues_construct_search_parameter('Only show stories that belong to the specified project (eg @projectid=1).', 'project', 'id', FILTER_SANITIZE_NUMBER_INT);
   $flags['@project'] = agileissues_construct_search_parameter('Show stories that have been assigned to the given project (eg @project="My Project").', 'backlog', 'name', 'check_plain', NULL, AGILE_SEARCH_DATA_TYPE_LIKE);
-  $flags['@taskid'] = agileissues_construct_search_parameter('Only show the specified task (eg @taskid=1).', 'task', 'id', FILTER_SANITIZE_NUMBER_INT);
   $flags['@released'] = agileissues_construct_search_option('Limit the results to stories that have been released.', 'story', 'sprint_id', 0, NULL, AGILE_SEARCH_DATA_TYPE_NOT);
+  $flags['@unreleased'] = agileissues_construct_search_option('Limit the results to stories that have not yet been released.', 'story', 'sprint_id', 0);
   if ($object_type === 'task') {
+    $flags['@nostory'] = agileissues_construct_search_option('Limit the results to tasks that have no story.', 'task', 'story_id', 0);
+    $flags['@unassigned'] = agileissues_construct_search_option('Limit the results to tasks which have not yet been assigned to a person.', 'task', 'uid', 0);
+    $flags['@unscheduled'] = agileissues_construct_search_option('Limit the results to tasks which have not yet been assigned to a sprint.', 'task', 'sprint_id', 0);
+    $flags['@taskid'] = agileissues_construct_search_parameter('Only show the specified task (eg @taskid=1).', 'task', 'id', FILTER_SANITIZE_NUMBER_INT);    
     $flags['@closed'] = agileissues_construct_search_option('Only show tasks that have been completed.', 'task', 'status', 'C');
     $flags['@completed'] = agileissues_construct_search_option('Alias of @closed.', 'task', 'status', 'C');
     $flags['@open'] = agileissues_construct_search_option('Only show tasks that are currently open.', 'task', 'status', 'O');
@@ -58,14 +59,14 @@ function _agileissues_default_dynamic_search_flags($object_type) {
   global $user;
   module_load_include('inc', 'agileissues');
   $flags = array();
-  $flags['@mystories'] = agileissues_construct_search_option('', 'story', 'reporting_uid', $user->uid);
-  $flags['@myportfolio'] = agileissues_construct_search_option('', 'story', 'primary_uid', $user->uid);
-  $flags['@mytasks'] = agileissues_construct_search_option('', 'task', 'uid', $user->uid);
+  $flags['@mystories'] = agileissues_construct_search_option('Limit results to stories that you opened.', 'story', 'reporting_uid', $user->uid);
+  $flags['@myportfolio'] = agileissues_construct_search_option('Limit results to stories for which you are the internal contact.', 'story', 'primary_uid', $user->uid);
   if ($object_type === 'story') {
-    $flags['@mine'] = agileissues_construct_search_option('', 'story', 'reporting_uid', $user->uid, 'story');
+    $flags['@mine'] = agileissues_construct_search_option('Alias of @mystories', 'story', 'reporting_uid', $user->uid, 'story');
   }
   else {
-    $flags['@mine'] = agileissues_construct_search_option('', 'task', 'uid', $user->uid);
+    $flags['@mytasks'] = agileissues_construct_search_option('Limit results to tasks that are assigned to you.', 'task', 'uid', $user->uid);
+    $flags['@mine'] = agileissues_construct_search_option('Alias of @mytasks', 'task', 'uid', $user->uid);
   }
   return $flags;
 }
@@ -495,10 +496,10 @@ function _agileissues_default_permissions() {
 
 function _agileissues_default_menu() {
    $menu = array(
-    'agile/search-tips/nojs' => array(
+    'agile/search-tips/%ctools_js' => array(
       'title' => 'Agile Search Tips',
       'page callback' => 'agileissues_get_content',
-      'page arguments' => array('agileissues_search_tips_page'),
+      'page arguments' => array('agileissues_search_tips_page', 2),
       'file' => 'agileissues.pages.inc',
       'type' => MENU_CALLBACK,
       'access callback' => 'agileissues_search_access',
