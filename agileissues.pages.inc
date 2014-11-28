@@ -148,11 +148,7 @@ function agileissues_story_form($form, &$form_state, $story = NULL, $project = N
   }
   $sprints = array();
   if (!empty($story->project_id)) {
-    $sprints = db_select('agileissues_sprints', 'ais')
-      ->fields('ais', array('id', 'name'))
-      ->orderBy('start_date')
-      ->condition('project_id', $story->project_id)
-      ->execute()->fetchAllKeyed(0, 1);
+    $sprints = agileissues_sprint_select_list($story->project_id);
   }
   module_load_include('internal.inc', 'agileissues');
   $form += array(
@@ -587,6 +583,26 @@ function agileissues_manage_stories_form_submit($form, &$form_state) {
   drupal_set_message(t('The backlog order has been updated'));
 }
 
+function agileissues_sprint_select_list($project) {
+  $sprints = db_select('agileissues_sprints', 'ais')
+    ->condition('project_id', is_object($project) ? $project->id : $project)
+    ->fields('ais')
+    ->orderBy('start_date', 'DESC')
+    ->execute();
+  $sprint_options = array();
+  module_load_include('backend.inc', 'agileissues');
+  $names = _agileissues_get_sprint_status_codes();
+  foreach ($sprints as $sprint) {
+    $sprints[$sprint->id] = t('@sprintname @sprintstart - @sprintend (@sprintstatus)', array(
+      '@sprintname' => t($sprint->name),
+      '@sprintstart' => format_date($sprint->start_date, 'short'),
+      '@sprintend' => format_date($sprint->end_date, 'short'),
+      '@sprintstatus' => $names[$sprint->status],
+    ));
+  }
+  return $sprint_options;
+}
+
 function agileissues_task_form($form, &$form_state, $task = NULL, $story = NULL) {
   global $user;
   $form['#theme'] = 'agileissues_task_form';
@@ -678,10 +694,7 @@ function agileissues_task_form($form, &$form_state, $task = NULL, $story = NULL)
   if (!empty($story_id)) {
     $story = agileissues_story_load($story_id);
     if (!empty($story)) {
-      $sprints = db_select('agileissues_sprints', 'ais')
-        ->fields('ais', array('id', 'name'))
-        ->condition('project_id', $story->project_id)
-        ->execute()->fetchAllKeyed(0, 1);
+      $sprints = agileissues_sprint_select_list($story->project_id);
     }
   }
   $form['sprint_id'] = array(
@@ -942,10 +955,7 @@ function agileissues_task_assign_form($form, &$form_state, $task) {
   $sprints = array();
   $story = agileissues_story_load($task->story_id);
   if (!empty($story)) {
-    $sprints = db_select('agileissues_sprints', 'ais')
-      ->fields('ais', array('id', 'name'))
-      ->condition('project_id', $story->project_id)
-      ->execute()->fetchAllKeyed(0, 1);
+    $sprints = agileissues_sprint_select_list($story->project_id);
   }
   $form['sprint_id'] = array(
     '#type' => 'select',
