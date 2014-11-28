@@ -593,7 +593,7 @@ function agileissues_sprint_select_list($project) {
   module_load_include('backend.inc', 'agileissues');
   $names = _agileissues_get_sprint_status_codes();
   foreach ($sprints as $sprint) {
-    $sprints[$sprint->id] = t('@sprintname @sprintstart - @sprintend (@sprintstatus)', array(
+    $sprint_options[$sprint->id] = t('@sprintname @sprintstart - @sprintend (@sprintstatus)', array(
       '@sprintname' => t($sprint->name),
       '@sprintstart' => format_date($sprint->start_date, 'short'),
       '@sprintend' => format_date($sprint->end_date, 'short'),
