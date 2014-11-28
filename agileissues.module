@@ -814,7 +814,6 @@ function agileissues_sprint_select_list($project) {
     ->execute();
   $sprint_options = array();
   module_load_include('backend.inc', 'agileissues');
-  $names = _agileissues_get_sprint_status_codes();
   foreach ($sprints as $sprint) {
     $sprint_options[$sprint->id] = theme('agileissues_sprint_name', array(
       'sprint' => $sprint,

@@ -346,6 +346,12 @@ function _agileissues_default_theme_hooks($path) {
       ),
       'file' => 'agileissues.theme.inc',
     ),
+    'agileissues_backlog_name' => array(
+      'variables' => array(
+        'backlog' => NULL,
+      ),
+      'file' => 'agileissues.theme.inc',
+    ),
     'agileissues_public_frontend' => array(
       'render element' => 'frontend',
       'template' => 'agileissues-public-frontend',

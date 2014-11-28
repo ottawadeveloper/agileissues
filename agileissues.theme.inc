@@ -37,6 +37,7 @@ function theme_agileissues_user_name($vars) {
 }
 
 function theme_agileissues_sprint_name($vars) {
+  $names = _agileissues_get_sprint_status_codes();
   if (empty($vars['sprint'])) { return ''; }
   return t('@sprintname (@sprintstart - @sprintend; @sprintstatus)', array(
     '@sprintname' => t($vars['sprint']->name),
