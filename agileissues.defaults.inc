@@ -334,12 +334,6 @@ function _agileissues_default_metrics() {
 function _agileissues_default_theme_hooks($path) {
   $path .= '/templates';
   return array(
-    'agileissues_user_name' => array(
-      'variables' => array(
-        'user' => NULL,
-      ),
-      'file' => 'agileissues.theme.inc',
-    ),
     'agileissues_sprint_name' => array(
       'variables' => array(
         'sprint' => NULL,

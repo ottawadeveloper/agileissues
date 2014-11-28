@@ -828,9 +828,7 @@ function agileissues_user_select_list($permission) {
   $user_options = array();
   foreach ($accounts as $account) {
     if ($account->uid > 1 && user_access($permission, $account)) {
-      $user_options[$account->uid] = theme('agileissues_user_name', array(
-        'user' => $account,
-      ));
+      $user_options[$account->uid] = format_username($account);
     }
   }
   asort($user_options);

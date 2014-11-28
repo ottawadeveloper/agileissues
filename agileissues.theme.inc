@@ -29,13 +29,6 @@ function theme_agileissues_backlog_name($vars) {
   return t($vars['backlog']->name);
 }
 
-function theme_agileissues_user_name($vars) {
-  if (empty($vars['user'])) {
-    return '';
-  }
-  return $vars['user']->name;
-}
-
 function theme_agileissues_sprint_name($vars) {
   $names = _agileissues_get_sprint_status_codes();
   if (empty($vars['sprint'])) { return ''; }
