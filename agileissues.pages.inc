@@ -132,20 +132,12 @@ function agileissues_story_form($form, &$form_state, $story = NULL, $project = N
   $form['created'] = array('#type' => 'value', '#value' => $story->created);
   $form['weight'] = array('#type' => 'value', '#value' => $story->weight);
   $form['reporting_uid'] = array('#type' => 'value', '#value' => $story->reporting_uid);
-  $backlogs = array();
-  foreach (agileissues_backlog_load_all() as $backlog) {
-    $backlogs[$backlog->id] = t($backlog->name);
-  }
+  $backlogs = agileissues_backlog_select_list($story->project_id);
   $projects = array();
   foreach (agileissues_project_load_all() as $project) {
     $projects[$project->id] = t($project->name);
   }
-  $users = array();
-  foreach (user_load_multiple(FALSE) as $u) {
-    if (user_access('own agile stories', $u)) {
-      $users[$u->uid] = $u->name;
-    }
-  }
+  $users = agileissues_user_select_list('own agile stories');
   $sprints = array();
   if (!empty($story->project_id)) {
     $sprints = agileissues_sprint_select_list($story->project_id);
@@ -358,7 +350,7 @@ function agileissues_story_form_submit($form, &$form_state) {
 }
 
 function agileissues_story_move_form($form, &$form_state, $story) {
-  $backlogs = array();
+  $backlogs = agileissues_backlog_select_list($story->project_id);
   foreach (agileissues_backlog_load_all() as $backlog) {
     $backlogs[$backlog->id] = t($backlog->name);
   }
@@ -439,11 +431,6 @@ function agileissues_note_form($form, &$form_state, $type, $object) {
     '#size' => 3,
     '#access' => $type === 'task' && user_access('provide agile hours'),
   );
-  $form['complete_task'] = array(
-    '#type' => 'checkbox',
-    '#title' => t('Mark this task as completed.'),
-    '#access' => $type === 'task',
-  );
   module_load_include('internal.inc', 'agileissues');
   $form['privacy'] = array(
     '#type' => 'select',
@@ -451,6 +438,11 @@ function agileissues_note_form($form, &$form_state, $type, $object) {
     '#options' => _agileissues_get_privacy_options(),
     '#default_value' => 'P',
     '#access' => user_access('change note privacy'),
+  );
+  $form['complete_task'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Mark this task as completed.'),
+    '#access' => $type === 'task',
   );
   if ($type === 'task') {
     $form['close_story'] = array(
@@ -583,26 +575,6 @@ function agileissues_manage_stories_form_submit($form, &$form_state) {
   drupal_set_message(t('The backlog order has been updated'));
 }
 
-function agileissues_sprint_select_list($project) {
-  $sprints = db_select('agileissues_sprints', 'ais')
-    ->condition('project_id', is_object($project) ? $project->id : $project)
-    ->fields('ais')
-    ->orderBy('start_date', 'DESC')
-    ->execute();
-  $sprint_options = array();
-  module_load_include('backend.inc', 'agileissues');
-  $names = _agileissues_get_sprint_status_codes();
-  foreach ($sprints as $sprint) {
-    $sprint_options[$sprint->id] = t('@sprintname (@sprintstart - @sprintend; @sprintstatus)', array(
-      '@sprintname' => t($sprint->name),
-      '@sprintstart' => format_date($sprint->start_date, 'short'),
-      '@sprintend' => format_date($sprint->end_date, 'short'),
-      '@sprintstatus' => $names[$sprint->status],
-    ));
-  }
-  return $sprint_options;
-}
-
 function agileissues_task_form($form, &$form_state, $task = NULL, $story = NULL) {
   global $user;
   $form['#theme'] = 'agileissues_task_form';
@@ -707,12 +679,7 @@ function agileissues_task_form($form, &$form_state, $task = NULL, $story = NULL)
     '#empty_value' => 0,
     '#access' => user_access('manage internal task data'),
   );
-  $user_options = array();
-  foreach (user_load_multiple(FALSE) as $u) {
-    if (user_access('own agile tasks')) {
-      $user_options[$u->uid] = $u->name;
-    }
-  }
+  $user_options = agileissues_user_select_list('own agile tasks');
   $form['uid'] = array(
     '#title' => t('Owner'),
     '#type' => 'select',
@@ -967,12 +934,7 @@ function agileissues_task_assign_form($form, &$form_state, $task) {
     '#empty_value' => 0,
     '#access' => user_access('manage internal task data'),
   );
-  $user_options = array();
-  foreach (user_load_multiple(FALSE) as $u) {
-    if (user_access('own agile tasks')) {
-      $user_options[$u->uid] = $u->name;
-    }
-  }
+  $user_options = agileissues_user_select_list('own agiel tasks');
   $form['uid'] = array(
     '#title' => t('Owner'),
     '#type' => 'select',
