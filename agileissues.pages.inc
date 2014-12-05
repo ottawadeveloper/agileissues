@@ -934,7 +934,7 @@ function agileissues_task_assign_form($form, &$form_state, $task) {
     '#empty_value' => 0,
     '#access' => user_access('manage internal task data'),
   );
-  $user_options = agileissues_user_select_list('own agiel tasks');
+  $user_options = agileissues_user_select_list('own agile tasks');
   $form['uid'] = array(
     '#title' => t('Owner'),
     '#type' => 'select',
