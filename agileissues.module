@@ -640,6 +640,9 @@ function agileissues_task_access($type, $task) {
   if (user_access('manage agile tasks') || user_access('manage internal task data')) {
     return TRUE;
   }
+  if ($type === 'note') {
+    return user_access('add agile task notes');
+  }
   if (user_access($type . ' all agile tasks')) {
     return TRUE;
   }
@@ -653,6 +656,9 @@ function agileissues_task_access($type, $task) {
 function agileissues_story_access($type, $story) {
   if (user_access('manage agile stories') || user_access('manage internal story data')) {
     return TRUE;
+  }
+  if ($type === 'note') {
+    return user_access('add agile story notes');
   }
   if (user_access($type . ' all agile stories')) {
     return TRUE;
