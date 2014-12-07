@@ -223,7 +223,7 @@ function _agileissues_default_story_operations($story, $render = 'main') {
   }
   if (user_access('vote on agile stories')) {
     module_load_include('internal.inc', 'agileissues');
-    $ops = _agileissues_generate_story_vote_link($story);
+    $ops[] = _agileissues_generate_story_vote_link($story);
   }
   if (agileissues_story_access('edit', $story)) {
     $ops[] = l(t('Edit'), 'agile/story/' . $story->id . '/edit/nojs', array('attributes' => array('class' => 'ctools-use-modal')));
