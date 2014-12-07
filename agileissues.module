@@ -863,3 +863,10 @@ function agileissues_backlog_select_list($project = NULL) {
   }
   return $backlog_options;
 }
+
+function agileissues_story_vote_count($story) {
+  return db_select('agileissues_story_user', 'aisu')
+    ->fields('aisu')
+    ->condition('story_id', $story->id)
+    ->execute()->rowCount();
+}

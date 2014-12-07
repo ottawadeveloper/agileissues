@@ -208,14 +208,6 @@ function _agileissues_default_project_operations($project, $render = 'main') {
   return $ops;
 }
 
-function _agileissues_user_voted_for($story) {
-  global $user;
-  return db_select('agileissues_story_user', 'aisu')
-    ->fields('aisu')
-    ->condition('story_id', $story->id)
-    ->condition('uid', $user->uid)
-    ->execute()->rowCount();
-}
 
 function _agileissues_default_story_operations($story, $render = 'main') {
   global $user;
@@ -231,6 +223,7 @@ function _agileissues_default_story_operations($story, $render = 'main') {
     $ops[] = l(t('View'), 'agile/story/' . $story->id . '/nojs', array('attributes' => array('class' => 'ctools-use-modal')));
   }
   if (user_access('vote on agile stories')) {
+    module_load_include('internal.inc', 'agileissues');
     if (_agileissues_user_voted_for($story)) {
       $ops[] = l(t('Remove Vote'), 'system/agile/vote-down/' . $story->id . '/nojs', array(
         'attributes' => array(

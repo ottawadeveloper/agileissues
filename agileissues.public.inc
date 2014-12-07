@@ -15,9 +15,14 @@ function agileissues_vote_up($story, $type = 'ajax') {
     drupal_goto('agile-public');
   }
   else {
-    return array(
-      ctools_ajax_command_reload(),
-    );
+    ajax_deliver(array(
+      array(
+        '#type' => 'ajax',
+        '#commands' => array(
+          ctools_ajax_command_reload(),
+        ),
+      ),
+    ));
   }
 }
 
@@ -32,9 +37,14 @@ function agileissues_vote_down($story, $type = 'ajax') {
     drupal_goto('agile-public');
   }
   else {
-    return array(
-      ctools_ajax_command_reload(),
-    );
+    ajax_deliver(array(
+      array(
+        '#type' => 'ajax',
+        '#commands' => array(
+          ctools_ajax_command_reload(),
+        ),
+      ),
+    ));
   }
 }
 

@@ -15,6 +15,15 @@ function _agileissues_get_privacy_name($code) {
   }
 }
 
+function _agileissues_user_voted_for($story) {
+  global $user;
+  return db_select('agileissues_story_user', 'aisu')
+    ->fields('aisu')
+    ->condition('story_id', $story->id)
+    ->condition('uid', $user->uid)
+    ->execute()->rowCount();
+}
+
 function _agileissues_get_search_vectors() {
   global $language;
   $cached = &drupal_static(__FUNCTION__, array());
