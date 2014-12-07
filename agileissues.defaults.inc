@@ -208,7 +208,6 @@ function _agileissues_default_project_operations($project, $render = 'main') {
   return $ops;
 }
 
-
 function _agileissues_default_story_operations($story, $render = 'main') {
   global $user;
   ctools_include('ajax');
@@ -224,22 +223,7 @@ function _agileissues_default_story_operations($story, $render = 'main') {
   }
   if (user_access('vote on agile stories')) {
     module_load_include('internal.inc', 'agileissues');
-    if (_agileissues_user_voted_for($story)) {
-      $ops[] = l(t('Remove Vote'), 'system/agile/vote-down/' . $story->id . '/nojs', array(
-        'attributes' => array(
-          'class' => array('use-ajax'),
-        ),
-        'query' => drupal_get_destination(),
-      ));
-    }
-    else {
-      $ops[] = l(t('Vote Up'), 'system/agile/vote-up/' . $story->id . '/nojs', array(
-        'attributes' => array(
-          'class' => array('use-ajax'),
-        ),
-        'query' => drupal_get_destination(),
-      )); 
-    }
+    $ops = _agileissues_generate_story_vote_link($story);
   }
   if (agileissues_story_access('edit', $story)) {
     $ops[] = l(t('Edit'), 'agile/story/' . $story->id . '/edit/nojs', array('attributes' => array('class' => 'ctools-use-modal')));

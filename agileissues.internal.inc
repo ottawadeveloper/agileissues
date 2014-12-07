@@ -1,5 +1,26 @@
 <?php
 
+function _agileissues_generate_story_vote_link($story) {
+    if (_agileissues_user_voted_for($story)) {
+      return l(t('Remove Vote'), 'system/agile/vote-down/' . $story->id . '/nojs', array(
+        'attributes' => array(
+          'class' => array('use-ajax'),
+          'id' => 'story_vote_' . $story->id,
+        ),
+        'query' => drupal_get_destination(),
+      ));
+    }
+    else {
+      return l(t('Vote Up'), 'system/agile/vote-up/' . $story->id . '/nojs', array(
+        'attributes' => array(
+          'class' => array('use-ajax'),
+          'id' => 'story_vote_' . $story->id,
+        ),
+        'query' => drupal_get_destination(),
+      )); 
+    }
+}
+
 function _agileissues_get_privacy_options() {
   return array(
     'P' => t('Public'),
