@@ -153,7 +153,7 @@ function _agileissues_update_priorities() {
     variable_set('agileissues_cron_last_check', time());
     $maxTime = variable_get('agileissues_cron_process_stories', 300);
     $start = time();
-    $storyIDs = db_select('agileissues_story', 'ais')
+    $storyIDs = db_select('agileissues_stories', 'ais')
       ->orderBy('updated', 'ASC')
       ->fields('ais', array('id'))
       ->execute()->fetchAllKeyed(0, 0);

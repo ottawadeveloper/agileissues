@@ -23,6 +23,7 @@ function agileissues_vote_up($story, $type = 'ajax') {
         ),
       ),
     ));
+    drupal_exit();
   }
 }
 
@@ -45,6 +46,7 @@ function agileissues_vote_down($story, $type = 'ajax') {
         ),
       ),
     ));
+    drupal_exit();
   }
 }
 
