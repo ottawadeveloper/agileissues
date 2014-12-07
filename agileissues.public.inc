@@ -15,6 +15,7 @@ function agileissues_vote_up($story, $type = 'ajax') {
     drupal_goto('agile-public');
   }
   else {
+    ctools_include('ajax');
     ajax_deliver(array(
       array(
         '#type' => 'ajax',
@@ -38,6 +39,7 @@ function agileissues_vote_down($story, $type = 'ajax') {
     drupal_goto('agile-public');
   }
   else {
+    ctools_include('ajax');
     ajax_deliver(array(
       array(
         '#type' => 'ajax',
