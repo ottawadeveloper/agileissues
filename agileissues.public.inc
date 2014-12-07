@@ -20,7 +20,7 @@ function agileissues_vote_up($story, $type = 'ajax') {
       array(
         '#type' => 'ajax',
         '#commands' => array(
-          ajax_command_replace('#story_vote_' . $story->id, _agileissues_generate_story_vote_link($story)),
+          ctools_ajax_command_reload(),
         ),
       ),
     ));
@@ -44,7 +44,7 @@ function agileissues_vote_down($story, $type = 'ajax') {
       array(
         '#type' => 'ajax',
         '#commands' => array(
-          ajax_command_replace('#story_vote_' . $story->id, _agileissues_generate_story_vote_link($story)),
+          ctools_ajax_command_reload(),
         ),
       ),
     ));

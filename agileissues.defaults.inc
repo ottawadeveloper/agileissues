@@ -158,6 +158,7 @@ function _agileissues_default_operations($type, $object = NULL, $render = 'main'
 function _agileissues_default_project_operations($project, $render = 'main') {
   ctools_include('ajax');
   ctools_include('modal');
+  ctools_add_js('ajax-responder');
   ctools_modal_add_js();
   $ops = array();
   if (agileissues_public_access('project', $project) && $render === 'public') {
