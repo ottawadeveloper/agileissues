@@ -208,9 +208,20 @@ function _agileissues_default_project_operations($project, $render = 'main') {
   return $ops;
 }
 
+function _agileissues_user_voted_for($story) {
+  global $user;
+  return db_select('agileissues_story_user', 'aisu')
+    ->fields('aisu')
+    ->condition('story_id', $story->id)
+    ->condition('uid', $user->uid)
+    ->execute()->rowCount();
+}
+
 function _agileissues_default_story_operations($story, $render = 'main') {
+  global $user;
   ctools_include('ajax');
   ctools_include('modal');
+  drupal_add_js('misc/ajax.js');
   ctools_modal_add_js();
   $ops = array();
   if ($render ==='public' && agileissues_public_access('story', $story)) {
@@ -218,6 +229,24 @@ function _agileissues_default_story_operations($story, $render = 'main') {
   }
   elseif (agileissues_story_access('view', $story)) {
     $ops[] = l(t('View'), 'agile/story/' . $story->id . '/nojs', array('attributes' => array('class' => 'ctools-use-modal')));
+  }
+  if (user_access('vote on agile stories')) {
+    if (_agileissues_user_voted_for($story)) {
+      $ops[] = l(t('Remove Vote'), 'system/agile/vote-down/' . $story->id . '/nojs', array(
+        'attributes' => array(
+          'class' => array('use-ajax'),
+        ),
+        'query' => drupal_get_destination(),
+      ));
+    }
+    else {
+      $ops[] = l(t('Vote Up'), 'system/agile/vote-up/' . $story->id . '/nojs', array(
+        'attributes' => array(
+          'class' => array('use-ajax'),
+        ),
+        'query' => drupal_get_destination(),
+      )); 
+    }
   }
   if (agileissues_story_access('edit', $story)) {
     $ops[] = l(t('Edit'), 'agile/story/' . $story->id . '/edit/nojs', array('attributes' => array('class' => 'ctools-use-modal')));
@@ -554,11 +583,28 @@ function _agileissues_default_permissions() {
     'change note privacy' => array(
       'title' => t('Change note privacy'),
     ),
+    'vote on agile stories' => array(
+      'title' => t('Vote on agile stories'),
+    ),
   );
 }
 
 function _agileissues_default_menu() {
-   $menu = array(
+  $menu = array(
+    'system/agile/vote-down/%agileissues_story' => array(
+      'title' => t('Vote Down Agile'),
+      'file' => 'agileissues.public.inc',
+      'page callback' => 'agileissues_vote_down',
+      'page arguments' => array(3),
+      'access arguments' => array('vote on agile stories'),
+    ),
+    'system/agile/vote-up/%agileissues_story' => array(
+      'title' => t('Vote Up Agile'),
+      'file' => 'agileissues.public.inc',
+      'page callback' => 'agileissues_vote_up',
+      'page arguments' => array(3),
+      'access arguments' => array('vote on agile stories'),
+    ),
     'agile-public' => array(
       'title' => t('Agile'),
       'file' => 'agileissues.public.inc',
