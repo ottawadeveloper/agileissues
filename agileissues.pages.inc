@@ -858,13 +858,10 @@ function agileissues_metrics_form($form, &$form_state, $project = NULL) {
 
 function agileissues_manage_tasks_form($form, &$form_state, $project, $sprint = NULL) {
   $q = db_select('agileissues_tasks', 'ait')
-    ->fields('ait', array('id'))
-    ->orderBy('weight');
-  $storyIDs = db_select('agileissues_stories', 'ais')
-    ->fields('ais', array('id'))
-    ->condition('project_id', $project->id)
-    ->execute()->fetchAllKeyed(0, 0);
-  $q->condition('story_id', $storyIDs, 'IN');
+    ->fields('ait', array('id'));
+  $q->join('agileissues_stories', 'ais', 'ais.id = ait.story_id');
+  $q->orderBy('ais.weight');
+  $q->condition('ais.project_id', $project->id);
   if (!empty($sprint)) {
     $q->condition('sprint_id', $sprint->id);
   }
