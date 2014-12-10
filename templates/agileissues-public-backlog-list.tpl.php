@@ -44,6 +44,7 @@
   
   $q = db_select('agileissues_stories', 'ais')
     ->fields('ais', array('id'))
+    ->orderBy('weight')
     ->condition('project_id', $list['#project']->id);
   if (empty($list['#backlog'])) {
     $q->condition('backlog_id', 0);
