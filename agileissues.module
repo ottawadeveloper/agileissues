@@ -874,3 +874,29 @@ function agileissues_story_vote_count($story) {
     ->condition('story_id', $story->id)
     ->execute()->rowCount();
 }
+
+function _agileissues_tasks_query($settings) {
+  $q = db_select('agileissues_tasks', 'ait');
+  $q->fields('ait', array('id'));
+  $q->join('agileissues_stories', 'ais', 'ais.id = ait.story_id');
+  $q->orderBy('ais.weight');
+  if (!empty($settings['project'])) {
+    $q->condition('ais.project_id', $settings['project']->id);
+  }
+  elseif (isset($settings['project'])) {
+    $q->condition('ais.project_id', 0);
+  }
+  if (!empty($settings['sprint'])) {
+    $q->condition('ait.sprint_id', $settings['sprint']->id);
+  }
+  elseif (isset($settings['sprint'])) {
+    $q->condition('ait.sprint_id', 0);
+  }
+  if (!empty($settings['uid'])) {
+    $q->condition('ait.uid', $settings['uid']->uid);
+  }
+  elseif (isset($settings['uid'])) {
+    $q->condition('ait.uid', 0);
+  }
+  return $q->execute->fetchAllKeyed(0, 0);
+}
