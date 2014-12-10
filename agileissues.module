@@ -879,7 +879,7 @@ function _agileissues_tasks_query($settings) {
   $q = db_select('agileissues_tasks', 'ait');
   $q->fields('ait', array('id'));
   $q->join('agileissues_stories', 'ais', 'ais.id = ait.story_id');
-  $q->orderBy('ais.weight');
+  $q->orderBy('ait.weight');
   if (!empty($settings['project'])) {
     $q->condition('ais.project_id', $settings['project']->id);
   }
