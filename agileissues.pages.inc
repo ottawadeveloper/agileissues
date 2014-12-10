@@ -855,6 +855,9 @@ function agileissues_manage_tasks_form($form, &$form_state, $project, $sprint = 
     'sprint' => $sprint,
   ));
   $form['#sprint_name'] = t('Unscheduled');
+  if (!empty($sprint)) {
+    $form['#sprint_name'] = t($sprint->name);
+  }
   $form['#tree'] = TRUE;
   $form['#project'] = $project;
   
