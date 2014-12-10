@@ -212,7 +212,6 @@ function _agileissues_default_story_operations($story, $render = 'main') {
   global $user;
   ctools_include('ajax');
   ctools_include('modal');
-  ctools_add_js('ajax-responder');
   ctools_modal_add_js();
   $ops = array();
   if ($render ==='public' && agileissues_public_access('story', $story)) {

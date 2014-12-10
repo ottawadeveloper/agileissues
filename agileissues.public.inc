@@ -16,14 +16,15 @@ function agileissues_vote_up($story, $type = 'ajax') {
   }
   else {
     ctools_include('ajax');
-    ajax_deliver(array(
+    module_load_include('internal.inc', 'agileissues');
+    ajax_deliver(
       array(
         '#type' => 'ajax',
         '#commands' => array(
-          ctools_ajax_command_reload(),
+          ajax_command_replace('#story_vote_' . $story->id, _agileissues_generate_story_vote_link($story)),
         ),
-      ),
-    ));
+      )
+    );
     drupal_exit();
   }
 }
@@ -40,14 +41,15 @@ function agileissues_vote_down($story, $type = 'ajax') {
   }
   else {
     ctools_include('ajax');
-    ajax_deliver(array(
+    module_load_include('internal.inc', 'agileissues');
+    ajax_deliver(
       array(
         '#type' => 'ajax',
         '#commands' => array(
-          ctools_ajax_command_reload(),
+          ajax_command_replace('#story_vote_' . $story->id, _agileissues_generate_story_vote_link($story)),
         ),
-      ),
-    ));
+      )
+    );
     drupal_exit();
   }
 }
