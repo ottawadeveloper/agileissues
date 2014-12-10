@@ -209,6 +209,7 @@ function _agileissues_default_project_operations($project, $render = 'main') {
 }
 
 function _agileissues_default_story_operations($story, $render = 'main') {
+  global $user;
   ctools_include('ajax');
   ctools_include('modal');
   ctools_modal_add_js();
@@ -218,6 +219,10 @@ function _agileissues_default_story_operations($story, $render = 'main') {
   }
   elseif (agileissues_story_access('view', $story)) {
     $ops[] = l(t('View'), 'agile/story/' . $story->id . '/nojs', array('attributes' => array('class' => 'ctools-use-modal')));
+  }
+  if (user_access('vote on agile stories')) {
+    module_load_include('internal.inc', 'agileissues');
+    $ops[] = _agileissues_generate_story_vote_link($story);
   }
   if (agileissues_story_access('edit', $story)) {
     $ops[] = l(t('Edit'), 'agile/story/' . $story->id . '/edit/nojs', array('attributes' => array('class' => 'ctools-use-modal')));
@@ -554,11 +559,28 @@ function _agileissues_default_permissions() {
     'change note privacy' => array(
       'title' => t('Change note privacy'),
     ),
+    'vote on agile stories' => array(
+      'title' => t('Vote on agile stories'),
+    ),
   );
 }
 
 function _agileissues_default_menu() {
-   $menu = array(
+  $menu = array(
+    'system/agile/vote-down/%agileissues_story' => array(
+      'title' => t('Vote Down Agile'),
+      'file' => 'agileissues.public.inc',
+      'page callback' => 'agileissues_vote_down',
+      'page arguments' => array(3),
+      'access arguments' => array('vote on agile stories'),
+    ),
+    'system/agile/vote-up/%agileissues_story' => array(
+      'title' => t('Vote Up Agile'),
+      'file' => 'agileissues.public.inc',
+      'page callback' => 'agileissues_vote_up',
+      'page arguments' => array(3),
+      'access arguments' => array('vote on agile stories'),
+    ),
     'agile-public' => array(
       'title' => t('Agile'),
       'file' => 'agileissues.public.inc',

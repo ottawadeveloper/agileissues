@@ -1,5 +1,26 @@
 <?php
 
+function _agileissues_generate_story_vote_link($story) {
+    if (_agileissues_user_voted_for($story)) {
+      return l(t('Remove Vote'), 'system/agile/vote-down/' . $story->id . '/nojs', array(
+        'attributes' => array(
+          'class' => array('use-ajax'),
+          'id' => 'story_vote_' . $story->id,
+        ),
+        'query' => drupal_get_destination(),
+      ));
+    }
+    else {
+      return l(t('Vote Up'), 'system/agile/vote-up/' . $story->id . '/nojs', array(
+        'attributes' => array(
+          'class' => array('use-ajax'),
+          'id' => 'story_vote_' . $story->id,
+        ),
+        'query' => drupal_get_destination(),
+      )); 
+    }
+}
+
 function _agileissues_get_privacy_options() {
   return array(
     'P' => t('Public'),
@@ -13,6 +34,15 @@ function _agileissues_get_privacy_name($code) {
   if (isset($privacy[$code])) {
     return $privacy[$code];
   }
+}
+
+function _agileissues_user_voted_for($story) {
+  global $user;
+  return db_select('agileissues_story_user', 'aisu')
+    ->fields('aisu')
+    ->condition('story_id', $story->id)
+    ->condition('uid', $user->uid)
+    ->execute()->rowCount();
 }
 
 function _agileissues_get_search_vectors() {
@@ -144,7 +174,7 @@ function _agileissues_update_priorities() {
     variable_set('agileissues_cron_last_check', time());
     $maxTime = variable_get('agileissues_cron_process_stories', 300);
     $start = time();
-    $storyIDs = db_select('agileissues_story', 'ais')
+    $storyIDs = db_select('agileissues_stories', 'ais')
       ->orderBy('updated', 'ASC')
       ->fields('ais', array('id'))
       ->execute()->fetchAllKeyed(0, 0);

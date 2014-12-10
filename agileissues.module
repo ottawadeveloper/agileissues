@@ -11,6 +11,10 @@ define('AGILE_SEARCH_DATA_TYPE_LTE', 'lte');
 define('AGILE_SEARCH_DATA_TYPE_GTE', 'gte');
 define('AGILE_SEARCH_DATA_TYPE_NOT', 'not');
 
+function agileissues_init() {
+  ctools_add_js('ajax-responder');
+}
+
 function agileissues_search_vectors($for_type) {
   module_load_include('internal.inc', 'agileissues');
   $vectors = _agileissues_get_search_vectors();
@@ -862,4 +866,11 @@ function agileissues_backlog_select_list($project = NULL) {
     asort($backlog_options);
   }
   return $backlog_options;
+}
+
+function agileissues_story_vote_count($story) {
+  return db_select('agileissues_story_user', 'aisu')
+    ->fields('aisu')
+    ->condition('story_id', $story->id)
+    ->execute()->rowCount();
 }

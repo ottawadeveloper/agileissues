@@ -19,6 +19,7 @@ function agileissues_schema() {
     'agileissues_changelog' => _agileissues_schema_changelog(),
     'agileissues_relationships' => _agileissues_schema_relationships(),
     'agileissues_project_backlog' => _agileissues_schema_project_backlog(),
+    'agileissues_story_user' => _agileissues_schema_story_user(),
   );
 }
 
@@ -110,6 +111,38 @@ function agileissues_update_7104() {
   if (!db_table_exists('agileissues_project_backlog')) {
     db_create_table('agileissues_project_backlog', _agileissues_schema_project_backlog());
   }
+}
+
+/**
+ * Support for voting up user stories. 
+ */
+function agileissues_update_7105() {
+  if (!db_table_exists('agileissues_story_user')) {
+    db_create_table('agileissues_story_user', _agileissues_schema_story_user());
+  }
+}
+
+function _agileissues_schema_story_user() {
+  return array(
+    'fields' => array(
+      'uid' => array(
+        'type' => 'int',
+        'size' => 'normal',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'story_id' => array(
+        'type' => 'int',
+        'size' => 'normal',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+    ),
+    'primary key' => array(
+      'uid',
+      'story_id',
+    ),
+  );
 }
 
 /**
