@@ -314,7 +314,7 @@ function _agileissues_user_name($uid) {
   if (empty($user)) {
     return '';
   }
-  return $user->name;
+  return format_username($user);
 }
 
 function _agileissues_task_story_name($story_id) {
