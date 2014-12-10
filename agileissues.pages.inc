@@ -765,17 +765,10 @@ function agileissues_task_form_submit($form, &$form_state) {
 
 function agileissues_my_tasks_page($project = NULL) {
   global $user;
-  $q = db_select('agileissues_tasks', 'ait')
-    ->condition('uid', $user->uid)
-    ->fields('ait', array('id'));
-  if (!empty($project)) {
-    $storyIDs = db_select('agileissues_stories', 'ais')
-      ->fields('ais', array('id'))
-      ->condition('project_id', $project->id)
-      ->execute()->fetchAllKeyed(0, 0);
-    $q->condition('story_id', $storyIDs, 'IN');
-  }
-  $ids = $q->execute()->fetchAllKeyed(0, 0);
+  $ids = _agileissues_tasks_query(array(
+    'project' => $project,
+    'uid' => $user,
+  ));
   return array(
     '#theme' => 'agileissues_task_list',
     '#ids' => $ids,
@@ -857,30 +850,14 @@ function agileissues_metrics_form($form, &$form_state, $project = NULL) {
 }
 
 function agileissues_manage_tasks_form($form, &$form_state, $project, $sprint = NULL) {
-  $q = db_select('agileissues_tasks', 'ait')
-    ->fields('ait', array('id'))
-    ->orderBy('weight');
-  $storyIDs = db_select('agileissues_stories', 'ais')
-    ->fields('ais', array('id'))
-    ->condition('project_id', $project->id)
-    ->execute()->fetchAllKeyed(0, 0);
-  $q->condition('story_id', $storyIDs, 'IN');
-  if (!empty($sprint)) {
-    $q->condition('sprint_id', $sprint->id);
-  }
-  else {
-    $q->condition('sprint_id', 0);
-  }
-  $taskIDs = $q->execute()->fetchAllKeyed(0, 0);
+  $taskIDs = _agileissues_tasks_query(array(
+    'project' => $project,
+    'sprint' => $sprint,
+  ));
   $form['#sprint_name'] = t('Unscheduled');
   if (!empty($sprint)) {
     $form['#sprint_name'] = t($sprint->name);
-    $q->condition('sprint_id', $sprint->id);
   }
-  else {
-    $q->condition('sprint_id', 0);
-  }  
-  $stories = $q->execute()->fetchAllKeyed(0, 0);
   $form['#tree'] = TRUE;
   $form['#project'] = $project;
   
