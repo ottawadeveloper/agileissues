@@ -898,5 +898,8 @@ function _agileissues_tasks_query($settings) {
   elseif (isset($settings['uid'])) {
     $q->condition('ait.uid', 0);
   }
+  if (!empty($settings['status'])) {
+    $q->condition('ait.status', $settings['status']);
+  }
   return $q->execute()->fetchAllKeyed(0, 0);
 }
