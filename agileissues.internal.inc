@@ -347,8 +347,8 @@ function _agileissues_register_change($etype, $eid, $property, $old, $new) {
     'entity_type' => $etype,
     'entity_id' => $eid,
     'property_key' => $property,
-    'old_value' => $old,
-    'new_value' => $new,
+    'old_value' => empty($old) ? '' : $old,
+    'new_value' => empty($new) ? '' : $new,
     'created' => time(),
     'uid' => $user->uid,
   );
