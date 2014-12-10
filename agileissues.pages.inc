@@ -768,7 +768,7 @@ function agileissues_my_tasks_page($project = NULL) {
   $ids = _agileissues_tasks_query(array(
     'project' => $project,
     'uid' => $user,
-    'status' => '0',
+    'status' => 'O',
   ));
   return array(
     '#theme' => 'agileissues_task_list',
