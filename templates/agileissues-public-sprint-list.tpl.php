@@ -40,22 +40,10 @@
    
   echo $output;
   
-  $story_ids = $ids = db_select('agileissues_stories', 'ais')
-    ->fields('ais', array('id'))
-    ->condition('project_id', $list['#project']->id)
-    ->execute()
-    ->fetchAllKeyed(0, 0);
-  
-  $q = db_select('agileissues_tasks', 'ais')
-    ->fields('ais', array('id'))
-    ->condition('story_id', $story_ids);
-  if (empty($list['#sprint'])) {
-    $q->condition('sprint_id', 0);
-  }
-  else {
-    $q->condition('sprint_id', $list['#sprint']->id);
-  }
-  $task_ids = $q->execute()->fetchAllKeyed(0, 0);
+  $task_ids = _agileissues_tasks_query(array(
+    'project' => $list['#project'],
+    'sprint' => $list['#sprint'],
+  ));
   $tasks = entity_load('agile_task', $task_ids);
   
   echo '<div class="agile-task-list">';
