@@ -1,5 +1,23 @@
 <?php
 
+function agileissues_release_notes($project, $sprint = NULL) {
+  $q = db_select('agileissues_sprints', 'ais')
+    ->condition('project_id', $project->id);
+  if (!empty($sprint)) {
+    $q->condition('id', $sprint->id);
+  }
+  $q->orderBy('end_date', 'DESC');
+  $sprints = $q->execute();
+  $render = array(
+    '#theme' => 'agileissues_release_notes',
+    '#sprints' => array(),
+  );
+  foreach ($sprints as $sprint) {
+    $render['#sprints'][$sprint->id] = $sprint;
+  }
+  return render($render);
+}
+
 function agileissues_vote_up($story, $type = 'ajax') {
   global $user;
   $vote = array(

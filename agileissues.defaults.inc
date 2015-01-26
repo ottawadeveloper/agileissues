@@ -461,6 +461,21 @@ function _agileissues_default_theme_hooks($path) {
       'template' => 'agileissues-search-results',
       'path' => $path,
     ),
+    'agileissues_release_notes' => array(
+      'render element' => 'notes',
+      'template' => 'agileissues-release-notes',
+      'path' => $path,
+    ),
+    'agileissues_release_sprint' => array(
+      'render element' => 'sprint',
+      'template' => 'agileissues-release-notes-sprint',
+      'path' => $path,
+    ),
+    'agileissues_release_story' => array(
+      'render element' => 'story',
+      'template' => 'agileissues-release-story',
+      'path' => $path,
+    ),
   );
 }
 
@@ -468,6 +483,9 @@ function _agileissues_default_permissions() {
   return array(
     'access internal objects' => array(
       'title' => t('View all internal objects'),
+    ),
+    'view release notes' => array(
+      'title' => t('View the release notes'),
     ),
     'access all hidden objects' => array(
       'title' => t('Access all hidden objects, regardless of owner.'),
@@ -603,6 +621,22 @@ function _agileissues_default_menu() {
       'file' => 'agileissues.public.inc',
       'access callback' => 'agileissues_public_access',
       'access arguments' => array('backlog', 2),
+    ),
+    'agile-public/project/%agileissues_project/release-notes' => array(
+      'title' => t('Release Notes'),
+      'page callback' => 'agileissues_release_notes',
+      'page arguments' => array(2),
+      'file' => 'agileissues.public.inc',
+      'access callback' => 'agileissues_public_access',
+      'access arguments' => array('release_notes', 2),
+    ),
+    'agile-public/project/%agileissues_project/release-notes/%agileissues_sprint' => array(
+      'title' => t('Release Notes'),
+      'page callback' => 'agileissues_release_notes',
+      'page arguments' => array(2, 4),
+      'file' => 'agileissues.public.inc',
+      'access callback' => 'agileissues_public_access',
+      'access arguments' => array('release_notes', 2),
     ),
      'agile-public/project/%agileissues_project/backlog/%agileissues_backlog' => array(
       'title' => t('View Backlog'),

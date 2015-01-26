@@ -596,6 +596,8 @@ function agileissues_public_access($type, $object = NULL, $subobject = NULL) {
         return FALSE;
       }
       return user_access('browse public agile tasks');
+    case 'release_notes':
+      return user_access('view release notes');
   }
   return FALSE;
 }
