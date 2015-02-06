@@ -161,7 +161,7 @@ function _agileissues_default_project_operations($project, $render = 'main') {
   ctools_modal_add_js();
   $ops = array();
   if (user_access('view release notes')) {
-    $ops['release-notes'] = l(t('Release Notes'), 'agile-public/project/' . $project->id);
+    $ops['release-notes'] = l(t('Release Notes'), 'agile-public/project/' . $project->id . '/release-notes');
   }
   if (agileissues_public_access('project', $project) && $render === 'public') {
     $ops['view-public'] = l(t('Browse'), 'agile-public/project/' . $project->id);
