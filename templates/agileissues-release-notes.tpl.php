@@ -42,26 +42,28 @@ foreach ($notes['#sprints'] as $id => $sprint) {
       $date = date(' - F jS Y', strtotime($full->field_release_date[LANGUAGE_NONE][0]['value']));
     }
     echo '<h2>' . t($sprint->name) . $date . '</h2>';
-
-   $stories = agileissues_find_stories($sprint);
-   if (empty($stories)) {
-     echo '<p>' . t('There are no stories currently assigned to this release.') . '</p>';
-   }
-   else {
-     echo '<ul>';
-     foreach ($stories as $id) {
-       echo '<li>';
-       $story = agileissues_story_load($id);
-       echo '<strong>#' . $story->id . ': '  . $story->title . '</strong>';
-       if (!empty($story->field_release_notes[$language->language])) {
-         echo '<br />' . agileissues_sanitize($story->field_release_notes[$language->language][0]['value']);
-       }
-       elseif (!empty($story->field_release_notes['en'])) {
-         echo '<br /><span lang="en">' . agileissues_santize($story->field_release_notes['en'][0]['value']) . '</span>';
-       }
-       echo '</li>';
-     }
-     echo '</ul>';
+    echo '<p>' . l(t('Release notes for only @name', array(
+      '@name' => t($sprint->name),
+    )), 'agile-public/project/' . $notes['#project']->id . '/release-notes/' . $sprint->id);
+    $stories = agileissues_find_stories($sprint);
+    if (empty($stories)) {
+      echo '<p>' . t('There are no stories currently assigned to this release.') . '</p>';
+    }
+    else {
+      echo '<ul>';
+      foreach ($stories as $id) {
+        echo '<li>';
+        $story = agileissues_story_load($id);
+        echo '<strong>#' . $story->id . ': '  . $story->title . '</strong>';
+        if (!empty($story->field_release_notes[$language->language])) {
+          echo '<br />' . agileissues_sanitize($story->field_release_notes[$language->language][0]['value']);
+        }
+        elseif (!empty($story->field_release_notes['en'])) {
+          echo '<br /><span lang="en">' . agileissues_santize($story->field_release_notes['en'][0]['value']) . '</span>';
+        }
+        echo '</li>';
+      }
+    echo '</ul>';
    }
    echo '</div>';
   }
