@@ -42,7 +42,7 @@ foreach ($notes['#sprints'] as $id => $sprint) {
       $date = date(' - F jS Y', strtotime($full->field_release_date[LANGUAGE_NONE][0]['value']));
     }
     echo '<h2>' . t($sprint->name) . $date . '</h2>';
-    echo '<p>' . l(t('Release notes for only @name', array(
+    echo '<p class="release-link">' . l(t('Release notes for only @name', array(
       '@name' => t($sprint->name),
     )), 'agile-public/project/' . $notes['#project']->id . '/release-notes/' . $sprint->id);
     $stories = agileissues_find_stories($sprint);
