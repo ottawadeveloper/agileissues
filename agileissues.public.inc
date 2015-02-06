@@ -2,6 +2,7 @@
 
 function agileissues_release_notes($project, $sprint = NULL) {
   $q = db_select('agileissues_sprints', 'ais')
+    ->fields('ais')
     ->condition('project_id', $project->id);
   if (!empty($sprint)) {
     $q->condition('id', $sprint->id);
@@ -11,6 +12,7 @@ function agileissues_release_notes($project, $sprint = NULL) {
   $render = array(
     '#theme' => 'agileissues_release_notes',
     '#sprints' => array(),
+    '#project' => $project,
   );
   foreach ($sprints as $sprint) {
     $render['#sprints'][$sprint->id] = $sprint;
